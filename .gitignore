@@ -1,0 +1,102 @@
+# ============================================================
+# factor-crowding-risk
+# Measuring the Crowd: Detecting Factor Capacity Risk
+# and Modeling Alpha Decay in U.S. Equities
+# ============================================================
+# Author: Ken Ira Lacson
+# GitHub: https://github.com/kira-ml
+# ============================================================
+
+# ------------------------------------
+# Python
+# ------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# ------------------------------------
+# Virtual Environment
+# ------------------------------------
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ------------------------------------
+# Jupyter Notebooks
+# ------------------------------------
+.ipynb_checkpoints/
+*.ipynb_checkpoints*
+
+# ------------------------------------
+# Data Files (downloaded datasets)
+# ------------------------------------
+data/
+*.csv
+*.parquet
+*.feather
+*.h5
+*.hdf5
+!data/.gitkeep
+
+# ------------------------------------
+# Outputs (generated plots, results, models)
+# ------------------------------------
+outputs/
+*.png
+*.jpg
+*.pdf
+*.pkl
+*.joblib
+!outputs/.gitkeep
+
+# ------------------------------------
+# IDE and Editor Files
+# ------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ------------------------------------
+# Environment and Secrets
+# ------------------------------------
+.env
+.env.local
+.env.*.local
+*.env
+
+# ------------------------------------
+# Jupyter Notebook Outputs (optional - keeps notebooks clean)
+# ------------------------------------
+# Uncomment if you want to strip notebook outputs before committing
+# *.ipynb metadata filters should be used instead for selective cleaning
+
+# ------------------------------------
+# OS Files
+# ------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ------------------------------------
+# Project-Specific
+# ------------------------------------
+# Cached yfinance downloads
+yfinance_cache/
