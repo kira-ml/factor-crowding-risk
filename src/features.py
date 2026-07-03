@@ -17,7 +17,9 @@ warnings.filterwarnings("ignore")
 
 def engineer_features(prices: pd.DataFrame, 
                       factor_returns: pd.DataFrame,
-                      rebalance_freq: str = 'weekly') -> dict:
+                      rebalance_freq: str = 'weekly',
+                      window_days: int = 60,
+                      quintile_pct: float = 0.2) -> dict:
     """
     Main entry point for feature engineering.
     
@@ -29,7 +31,10 @@ def engineer_features(prices: pd.DataFrame,
         Daily factor returns. Columns = ['momentum', 'value'].
     rebalance_freq : str
         'monthly' or 'weekly' - frequency of rebalancing.
-        Default: 'weekly' for more observations.
+    window_days : int
+        Window length for correlation calculation (30, 60, 90, 120).
+    quintile_pct : float
+        Top quintile percentage (0.1, 0.2, 0.3).
     
     Returns
     -------
@@ -38,23 +43,20 @@ def engineer_features(prices: pd.DataFrame,
         Each value is a DataFrame with crowding features by date.
     """
     print(f"Engineering crowding features ({rebalance_freq} rebalancing)...")
+    print(f"  Window days: {window_days}, Quintile: {quintile_pct*100:.0f}%")
     
     # Get rebalance dates
     daily_dates = factor_returns.index
     
     if rebalance_freq == 'weekly':
-        # Use end of week (Friday)
         rebalance_dates = daily_dates.to_series().resample('W-FRI').last().dropna()
     else:
-        # Default: monthly
         rebalance_dates = daily_dates.to_series().resample('M').last().dropna()
     
-    # Keep only dates that exist in factor_returns
     rebalance_dates = rebalance_dates[rebalance_dates.isin(daily_dates)]
     
     print(f"  Using {len(rebalance_dates)} {rebalance_freq} rebalance dates")
     
-    # Get daily returns for correlation calculations
     daily_returns = prices.pct_change()
     
     features = {}
@@ -62,7 +64,7 @@ def engineer_features(prices: pd.DataFrame,
     for factor in ['momentum', 'value']:
         print(f"  Processing {factor}...")
         features[factor] = _compute_features_for_factor(
-            prices, daily_returns, rebalance_dates, factor
+            prices, daily_returns, rebalance_dates, factor, window_days, quintile_pct
         )
     
     print("Feature engineering complete.")
@@ -72,38 +74,34 @@ def engineer_features(prices: pd.DataFrame,
 def _compute_features_for_factor(prices: pd.DataFrame,
                                   daily_returns: pd.DataFrame,
                                   rebalance_dates: pd.DatetimeIndex,
-                                  factor: str) -> pd.DataFrame:
+                                  factor: str,
+                                  window_days: int = 60,
+                                  quintile_pct: float = 0.2) -> pd.DataFrame:
     """
     Compute all crowding features for a single factor.
     """
     results = []
     
     for date in rebalance_dates:
-        # Get factor scores at this rebalance date
         factor_scores = _get_factor_scores(prices, date, factor)
         
         if factor_scores is None or len(factor_scores) < 50:
             continue
             
         # Identify top and bottom quintiles
-        n_quintile = max(1, int(len(factor_scores) * 0.2))
+        n_quintile = max(1, int(len(factor_scores) * quintile_pct))
         top_quintile = factor_scores.nlargest(n_quintile).index
         bottom_quintile = factor_scores.nsmallest(n_quintile).index
         
-        # --- BASELINE FEATURES ---
+        # 1. Pairwise Correlation
+        corr = _compute_pairwise_correlation(daily_returns, top_quintile, date, window_days)
         
-        # 1. Pairwise Correlation (average correlation among top quintile)
-        corr = _compute_pairwise_correlation(daily_returns, top_quintile, date)
-        
-        # 2. HHI (Factor Exposure Concentration)
+        # 2. HHI
         hhi = _compute_hhi(factor_scores)
         
-        # --- ADVANCED FEATURES ---
-        
-        # 3. Valuation Spread (price spread between top and bottom)
+        # 3. Valuation Spread
         val_spread = _compute_valuation_spread(prices, top_quintile, bottom_quintile, date)
         
-        # Store results
         results.append({
             'date': date,
             'correlation': corr if corr is not None else np.nan,
@@ -111,22 +109,17 @@ def _compute_features_for_factor(prices: pd.DataFrame,
             'valuation_spread': val_spread if val_spread is not None else np.nan,
         })
     
-    # Convert to DataFrame
     if len(results) == 0:
         return pd.DataFrame()
     
     df = pd.DataFrame(results)
     df.set_index('date', inplace=True)
-    
-    # Drop rows where all features are NaN
     df = df.dropna(how='all')
     
-    # Compute z-score composite (using only non-NaN values)
+    # Compute z-score composite
     if len(df) > 0:
-        # Use only rows where both correlation and HHI exist
         valid = df[['correlation', 'hhi']].dropna()
         if len(valid) > 0:
-            # Handle case where std is zero (all values identical)
             corr_std = valid['correlation'].std()
             hhi_std = valid['hhi'].std()
             
@@ -137,7 +130,6 @@ def _compute_features_for_factor(prices: pd.DataFrame,
             else:
                 z_composite = pd.Series(0, index=valid.index)
             
-            # Merge back
             df['z_composite'] = np.nan
             df.loc[valid.index, 'z_composite'] = z_composite
         else:
@@ -202,16 +194,18 @@ def _get_factor_scores(prices: pd.DataFrame,
 
 def _compute_pairwise_correlation(daily_returns: pd.DataFrame,
                                    tickers: list,
-                                   date: pd.Timestamp) -> float:
+                                   date: pd.Timestamp,
+                                   window_days: int = 60) -> float:
     """
-    Compute average pairwise correlation among tickers over past 60 days.
+    Compute average pairwise correlation among tickers over past window_days.
     """
-    # Get 60-day window ending at this date
-    window_start = date - pd.DateOffset(days=60)
+    # Get window ending at this date
+    window_start = date - pd.DateOffset(days=window_days)
     window_returns = daily_returns.loc[(daily_returns.index <= date) & 
                                        (daily_returns.index > window_start)]
     
-    if len(window_returns) < 30:
+    # Need at least 50% of days
+    if len(window_returns) < window_days * 0.5:
         return None
         
     # Filter to available tickers
@@ -226,7 +220,6 @@ def _compute_pairwise_correlation(daily_returns: pd.DataFrame,
     if subset.shape[1] < 10 or subset.shape[0] < 10:
         return None
         
-    # Remove columns with all NaN
     subset = subset.dropna(axis=1, how='all')
     
     if subset.shape[1] < 10:
@@ -286,7 +279,7 @@ def _compute_valuation_spread(prices: pd.DataFrame,
         return None
 
 
-def prepare_model_data(features: dict, factor_returns: pd.DataFrame) -> dict:
+def prepare_model_data(features: dict, factor_returns: pd.DataFrame, add_lags: bool = False) -> dict:
     """
     Prepare data for modeling by aligning features with forward factor returns.
     
@@ -296,6 +289,8 @@ def prepare_model_data(features: dict, factor_returns: pd.DataFrame) -> dict:
         Output from engineer_features()
     factor_returns : pd.DataFrame
         Daily factor returns.
+    add_lags : bool
+        If True, add 1-week and 2-week lagged features.
     
     Returns
     -------
@@ -306,22 +301,18 @@ def prepare_model_data(features: dict, factor_returns: pd.DataFrame) -> dict:
     model_data = {}
     
     for factor in ['momentum', 'value']:
-        # Get features for this factor
         feat_df = features[factor]
         
         if feat_df.empty:
             model_data[factor] = pd.DataFrame()
             continue
         
-        # Get forward returns (1-month and 3-month)
         forward_returns = []
         
         for date in feat_df.index:
-            # Find next month end
             next_month = date + pd.DateOffset(months=1)
             next_3month = date + pd.DateOffset(months=3)
             
-            # Get forward returns
             ret_1m = _get_forward_return(factor_returns[factor], date, next_month)
             ret_3m = _get_forward_return(factor_returns[factor], date, next_3month)
             
@@ -334,10 +325,16 @@ def prepare_model_data(features: dict, factor_returns: pd.DataFrame) -> dict:
         fwd_df = pd.DataFrame(forward_returns)
         fwd_df.set_index('date', inplace=True)
         
-        # Combine features with forward returns
         combined = feat_df.join(fwd_df)
-        combined = combined.dropna()
         
+        # Add lagged features if requested
+        if add_lags:
+            combined['z_composite_lag1'] = combined['z_composite'].shift(1)
+            combined['z_composite_lag2'] = combined['z_composite'].shift(2)
+            combined['correlation_lag1'] = combined['correlation'].shift(1)
+            combined['hhi_lag1'] = combined['hhi'].shift(1)
+        
+        combined = combined.dropna()
         model_data[factor] = combined
     
     return model_data
@@ -372,26 +369,22 @@ def print_correlation_summary(model_data: dict):
         print("-"*50)
         print(f"  Observations: {len(df)}")
         
-        # Correlation matrix
         feature_cols = ['correlation', 'hhi', 'valuation_spread', 'z_composite']
         target_cols = ['forward_1m', 'forward_3m']
+        
+        if 'z_composite_lag1' in df.columns:
+            feature_cols.extend(['z_composite_lag1', 'z_composite_lag2'])
         
         corr_matrix = df[feature_cols + target_cols].corr()
         
         print("\n  Correlations with Forward Returns:")
-        print(f"  {'Feature':<18} {'→ 1M':>10} {'→ 3M':>10}")
-        print("  " + "-"*40)
+        print(f"  {'Feature':<22} {'→ 1M':>10} {'→ 3M':>10}")
+        print("  " + "-"*45)
         for feat in feature_cols:
-            corr_1m = corr_matrix.loc[feat, 'forward_1m']
-            corr_3m = corr_matrix.loc[feat, 'forward_3m']
-            print(f"  {feat:<18} {corr_1m:>10.4f} {corr_3m:>10.4f}")
-        
-        print("\n  Feature Correlations (Inter-feature):")
-        print(f"  {'Pair':<25} {'Correlation':>12}")
-        print("  " + "-"*40)
-        print(f"  {'Correlation ↔ HHI':<25} {corr_matrix.loc['correlation', 'hhi']:>12.4f}")
-        print(f"  {'Correlation ↔ Z-Composite':<25} {corr_matrix.loc['correlation', 'z_composite']:>12.4f}")
-        print(f"  {'HHI ↔ Z-Composite':<25} {corr_matrix.loc['hhi', 'z_composite']:>12.4f}")
+            if feat in corr_matrix.index:
+                corr_1m = corr_matrix.loc[feat, 'forward_1m']
+                corr_3m = corr_matrix.loc[feat, 'forward_3m']
+                print(f"  {feat:<22} {corr_1m:>10.4f} {corr_3m:>10.4f}")
 
 
 # ---------------------------------------------------------------------------
