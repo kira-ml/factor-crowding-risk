@@ -34,7 +34,7 @@ except ImportError:
     print("Warning: LightGBM not installed. Advanced 2 will be skipped.")
 
 
-def run_staged_models(model_data: dict) -> dict:
+def run_staged_models(model_data: dict, target: str = 'forward_3m') -> dict:
     """
     Run staged modeling approach as defined in problem_framing.md.
     
@@ -42,7 +42,9 @@ def run_staged_models(model_data: dict) -> dict:
     ----------
     model_data : dict
         Output from prepare_model_data() in features.py
-        
+    target : str
+        'forward_1m' or 'forward_3m' - which forward return to predict
+    
     Returns
     -------
     dict
@@ -53,6 +55,8 @@ def run_staged_models(model_data: dict) -> dict:
         'stage_2_advanced': {}
     }
     
+    print(f"\n  Target horizon: {target}")
+    
     for factor in ['momentum', 'value']:
         print(f"\n{'='*70}")
         print(f"{factor.upper()} FACTOR - STAGED MODELING")
@@ -62,14 +66,22 @@ def run_staged_models(model_data: dict) -> dict:
         if df.empty:
             print("  No data available")
             continue
-            
+        
+        # Print dataset info
+        print(f"\n  Dataset: {len(df)} observations")
+        print(f"  Date range: {df.index[0].strftime('%Y-%m-%d')} to {df.index[-1].strftime('%Y-%m-%d')}")
+        
         # Prepare features
         features = ['correlation', 'hhi', 'valuation_spread', 'z_composite']
         X = df[features].copy()
         
-        # Targets: 3-month forward returns (as specified in problem_framing.md)
-        y_reg = df['forward_3m'].copy()
-        y_class = (df['forward_3m'] < 0).astype(int)
+        # Targets: use specified forward return
+        y_reg = df[target].copy()
+        y_class = (y_reg < 0).astype(int)
+        
+        # Check class balance
+        class_balance = y_class.mean()
+        print(f"  Class balance (negative returns): {class_balance:.1%}")
         
         # Chronological split (80/20)
         split_idx = int(len(X) * 0.8)
@@ -78,7 +90,8 @@ def run_staged_models(model_data: dict) -> dict:
         y_class_train, y_class_test = y_class.iloc[:split_idx], y_class.iloc[split_idx:]
         
         print(f"\n  Train size: {len(X_train)}, Test size: {len(X_test)}")
-        print(f"  Date range: {df.index[0].strftime('%Y-%m-%d')} to {df.index[-1].strftime('%Y-%m-%d')}")
+        print(f"  Train date range: {X_train.index[0].strftime('%Y-%m-%d')} to {X_train.index[-1].strftime('%Y-%m-%d')}")
+        print(f"  Test date range: {X_test.index[0].strftime('%Y-%m-%d')} to {X_test.index[-1].strftime('%Y-%m-%d')}")
         
         # --- STAGE 1: BASELINE MODELS ---
         print("\n" + "-"*60)
@@ -87,7 +100,7 @@ def run_staged_models(model_data: dict) -> dict:
         
         stage1_results = _run_baseline_models(
             X_train, X_test, y_reg_train, y_reg_test, 
-            y_class_train, y_class_test
+            y_class_train, y_class_test, target
         )
         
         results['stage_1_baseline'][factor] = stage1_results
@@ -125,7 +138,7 @@ def run_staged_models(model_data: dict) -> dict:
 
 
 def _run_baseline_models(X_train, X_test, y_reg_train, y_reg_test,
-                         y_class_train, y_class_test) -> dict:
+                         y_class_train, y_class_test, target) -> dict:
     """
     Run both baseline models as specified in problem_framing.md.
     """
@@ -134,7 +147,7 @@ def _run_baseline_models(X_train, X_test, y_reg_train, y_reg_test,
     # --- BASELINE 1: Composite Z-Score + Logistic Regression ---
     print("\n  BASELINE 1: Composite Z-Score + Logistic Regression")
     print("  ---------------------------------------------------")
-    print("  Predicting: Negative 3-month factor return")
+    print(f"  Predicting: Negative {target} factor return")
     print("  Feature: Z-Composite (avg of normalized Correlation + HHI)")
     
     # Use only Z-Composite feature
@@ -168,7 +181,7 @@ def _run_baseline_models(X_train, X_test, y_reg_train, y_reg_test,
     # --- BASELINE 2: Single-Feature Linear Decay Model ---
     print("\n  BASELINE 2: Single-Feature Linear Decay Model")
     print("  ---------------------------------------------")
-    print("  Predicting: 3-month forward factor return")
+    print(f"  Predicting: {target} forward factor return")
     print("  Feature: Pairwise Correlation")
     
     # Use only Correlation feature
@@ -484,26 +497,34 @@ if __name__ == "__main__":
     prices = data['prices']
     factor_returns = data['factor_returns']
     
-    print("\n2. Engineering features...")
-    features = engineer_features(prices, factor_returns)
+    print("\n2. Engineering features (weekly rebalancing)...")
+    features = engineer_features(prices, factor_returns, rebalance_freq='weekly')
     model_data = prepare_model_data(features, factor_returns)
     
     print("\n3. Running staged models...")
-    results = run_staged_models(model_data)
     
-    print("\n4. Creating comparison table...")
-    comparison_df = create_stage_comparison_table(results)
-    if not comparison_df.empty:
-        print("\n" + comparison_df.to_string(index=False))
-    
-    print("\n5. Generating summary report...")
-    print_summary_report(results)
-    
-    # Save outputs
-    if not comparison_df.empty:
-        import os
-        os.makedirs('../outputs', exist_ok=True)
-        comparison_df.to_csv('../outputs/staged_model_comparison.csv', index=False)
+    # Test both 1M and 3M targets
+    for target in ['forward_1m', 'forward_3m']:
         print("\n" + "="*70)
-        print("Results saved to: outputs/staged_model_comparison.csv")
+        print(f"TARGET: {target}")
         print("="*70)
+        results = run_staged_models(model_data, target=target)
+        
+        print("\n4. Creating comparison table...")
+        comparison_df = create_stage_comparison_table(results)
+        if not comparison_df.empty:
+            print("\n" + comparison_df.to_string(index=False))
+        
+        print("\n5. Generating summary report...")
+        print_summary_report(results)
+        
+        # Save outputs
+        if not comparison_df.empty:
+            import os
+            os.makedirs('../outputs', exist_ok=True)
+            comparison_df.to_csv(f'../outputs/staged_model_comparison_{target}.csv', index=False)
+            print(f"\nResults saved to: outputs/staged_model_comparison_{target}.csv")
+    
+    print("\n" + "="*70)
+    print("ALL EXPERIMENTS COMPLETE")
+    print("="*70)
