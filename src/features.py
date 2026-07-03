@@ -5,7 +5,7 @@ Implements:
 - Baseline: Pairwise Correlation, HHI
 - Advanced: Valuation Spread, Z-Score Composite
 
-All features computed on monthly rebalance dates.
+All features computed on configurable rebalance dates (weekly or monthly).
 No look-ahead bias: uses only information available at rebalance date.
 """
 
@@ -16,7 +16,8 @@ warnings.filterwarnings("ignore")
 
 
 def engineer_features(prices: pd.DataFrame, 
-                      factor_returns: pd.DataFrame) -> dict:
+                      factor_returns: pd.DataFrame,
+                      rebalance_freq: str = 'weekly') -> dict:
     """
     Main entry point for feature engineering.
     
@@ -26,6 +27,9 @@ def engineer_features(prices: pd.DataFrame,
         Daily adjusted close prices. Rows = dates, columns = tickers.
     factor_returns : pd.DataFrame
         Daily factor returns. Columns = ['momentum', 'value'].
+    rebalance_freq : str
+        'monthly' or 'weekly' - frequency of rebalancing.
+        Default: 'weekly' for more observations.
     
     Returns
     -------
@@ -33,16 +37,22 @@ def engineer_features(prices: pd.DataFrame,
         Keys: 'momentum', 'value'
         Each value is a DataFrame with crowding features by date.
     """
-    print("Engineering crowding features...")
+    print(f"Engineering crowding features ({rebalance_freq} rebalancing)...")
     
-    # Get monthly rebalance dates (end of each month with factor data)
+    # Get rebalance dates
     daily_dates = factor_returns.index
-    monthly_dates = daily_dates.to_series().resample('M').last().dropna()
+    
+    if rebalance_freq == 'weekly':
+        # Use end of week (Friday)
+        rebalance_dates = daily_dates.to_series().resample('W-FRI').last().dropna()
+    else:
+        # Default: monthly
+        rebalance_dates = daily_dates.to_series().resample('M').last().dropna()
     
     # Keep only dates that exist in factor_returns
-    rebalance_dates = monthly_dates[monthly_dates.isin(daily_dates)]
+    rebalance_dates = rebalance_dates[rebalance_dates.isin(daily_dates)]
     
-    print(f"  Using {len(rebalance_dates)} monthly rebalance dates")
+    print(f"  Using {len(rebalance_dates)} {rebalance_freq} rebalance dates")
     
     # Get daily returns for correlation calculations
     daily_returns = prices.pct_change()
@@ -346,6 +356,44 @@ def _get_forward_return(series: pd.Series, start_date: pd.Timestamp, end_date: p
         return np.nan
 
 
+def print_correlation_summary(model_data: dict):
+    """
+    Print detailed correlation summary for all features vs targets.
+    """
+    print("\n" + "="*70)
+    print("FEATURE CORRELATION SUMMARY")
+    print("="*70)
+    
+    for factor, df in model_data.items():
+        if df.empty:
+            continue
+            
+        print(f"\n{factor.upper()} FACTOR")
+        print("-"*50)
+        print(f"  Observations: {len(df)}")
+        
+        # Correlation matrix
+        feature_cols = ['correlation', 'hhi', 'valuation_spread', 'z_composite']
+        target_cols = ['forward_1m', 'forward_3m']
+        
+        corr_matrix = df[feature_cols + target_cols].corr()
+        
+        print("\n  Correlations with Forward Returns:")
+        print(f"  {'Feature':<18} {'→ 1M':>10} {'→ 3M':>10}")
+        print("  " + "-"*40)
+        for feat in feature_cols:
+            corr_1m = corr_matrix.loc[feat, 'forward_1m']
+            corr_3m = corr_matrix.loc[feat, 'forward_3m']
+            print(f"  {feat:<18} {corr_1m:>10.4f} {corr_3m:>10.4f}")
+        
+        print("\n  Feature Correlations (Inter-feature):")
+        print(f"  {'Pair':<25} {'Correlation':>12}")
+        print("  " + "-"*40)
+        print(f"  {'Correlation ↔ HHI':<25} {corr_matrix.loc['correlation', 'hhi']:>12.4f}")
+        print(f"  {'Correlation ↔ Z-Composite':<25} {corr_matrix.loc['correlation', 'z_composite']:>12.4f}")
+        print(f"  {'HHI ↔ Z-Composite':<25} {corr_matrix.loc['hhi', 'z_composite']:>12.4f}")
+
+
 # ---------------------------------------------------------------------------
 # Quick sanity check
 # ---------------------------------------------------------------------------
@@ -357,37 +405,31 @@ if __name__ == "__main__":
     prices = data['prices']
     factor_returns = data['factor_returns']
     
-    # Engineer features
-    features = engineer_features(prices, factor_returns)
+    print("="*70)
+    print("TESTING WEEKLY VS MONTHLY REBALANCING")
+    print("="*70)
     
-    # Prepare model data
-    model_data = prepare_model_data(features, factor_returns)
-    
-    print("\n" + "="*60)
-    print("FEATURE ENGINEERING SUMMARY")
-    print("="*60)
-    
-    for factor, df in model_data.items():
-        print(f"\n{factor.upper()} FACTOR - MODEL DATA")
-        print("-"*40)
-        if df.empty:
-            print("  No data available")
-            continue
+    # Test both frequencies
+    for freq in ['monthly', 'weekly']:
+        print(f"\n{'='*70}")
+        print(f"REBALANCE FREQUENCY: {freq.upper()}")
+        print('='*70)
+        
+        # Engineer features
+        features = engineer_features(prices, factor_returns, rebalance_freq=freq)
+        model_data = prepare_model_data(features, factor_returns)
+        
+        # Print summary
+        for factor, df in model_data.items():
+            print(f"\n{factor.upper()} FACTOR:")
+            print(f"  Observations: {len(df)}")
+            print(f"  Date range: {df.index[0].strftime('%Y-%m-%d')} to {df.index[-1].strftime('%Y-%m-%d')}")
             
-        print(f"  Observations: {len(df)}")
-        print(f"  Date range: {df.index[0].strftime('%Y-%m-%d')} to {df.index[-1].strftime('%Y-%m-%d')}")
-        print(f"\n  Features:")
-        print(f"    Correlation     | mean: {df['correlation'].mean():.4f} | std: {df['correlation'].std():.4f}")
-        print(f"    HHI             | mean: {df['hhi'].mean():.4f} | std: {df['hhi'].std():.4f}")
-        print(f"    Valuation Spread| mean: {df['valuation_spread'].mean():.4f} | std: {df['valuation_spread'].std():.4f}")
-        print(f"    Z-Composite     | mean: {df['z_composite'].mean():.4f} | std: {df['z_composite'].std():.4f}")
-        print(f"\n  Targets:")
-        print(f"    Forward 1M      | mean: {df['forward_1m'].mean():.4f} | std: {df['forward_1m'].std():.4f}")
-        print(f"    Forward 3M      | mean: {df['forward_3m'].mean():.4f} | std: {df['forward_3m'].std():.4f}")
-        print(f"\n  Correlations with targets:")
-        corr_1m = df[['correlation', 'hhi', 'valuation_spread', 'z_composite']].corrwith(df['forward_1m'])
-        corr_3m = df[['correlation', 'hhi', 'valuation_spread', 'z_composite']].corrwith(df['forward_3m'])
-        print(f"    Correlation     -> 1M: {corr_1m['correlation']:.4f} | 3M: {corr_3m['correlation']:.4f}")
-        print(f"    HHI             -> 1M: {corr_1m['hhi']:.4f} | 3M: {corr_3m['hhi']:.4f}")
-        print(f"    Valuation Spread-> 1M: {corr_1m['valuation_spread']:.4f} | 3M: {corr_3m['valuation_spread']:.4f}")
-        print(f"    Z-Composite     -> 1M: {corr_1m['z_composite']:.4f} | 3M: {corr_3m['z_composite']:.4f}")
+            if len(df) > 10:
+                z_1m = df['z_composite'].corr(df['forward_1m'])
+                z_3m = df['z_composite'].corr(df['forward_3m'])
+                print(f"  Z-Composite → 1M: {z_1m:.4f}")
+                print(f"  Z-Composite → 3M: {z_3m:.4f}")
+        
+        # Print detailed correlation summary
+        print_correlation_summary(model_data)
