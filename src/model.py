@@ -25,6 +25,14 @@ from sklearn.metrics import (
 import warnings
 warnings.filterwarnings("ignore")
 
+
+# ADD THIS IMPORT LINE BELOW
+from features import prepare_model_data
+
+
+
+
+
 # Optional: LightGBM (only if available)
 try:
     import lightgbm as lgb
@@ -224,6 +232,344 @@ def run_staged_models(model_data: dict,
             results['stage_2_advanced'][factor] = {'skipped': True}
     
     return results
+
+
+
+
+
+def run_feature_transform_experiment(features_transformed: dict,
+                                      factor_returns: pd.DataFrame,
+                                      target: str = 'forward_1m',
+                                      train_ratio: float = 0.8) -> pd.DataFrame:
+    """
+    Test ALL feature transforms in one batch.
+    
+    Returns DataFrame with results for each feature.
+    """
+    from sklearn.linear_model import LogisticRegression, LinearRegression
+    from sklearn.metrics import f1_score, r2_score
+    
+    # Prepare model data (align features with forward returns)
+    model_data = prepare_model_data(features_transformed, factor_returns)
+    
+    results_rows = []
+    
+    for factor in ['momentum', 'value']:
+        df = model_data[factor]
+        if df.empty:
+            continue
+        
+        # Get forward return target
+        y = df[target]
+        y_class = (y < 0).astype(int)
+        
+        # Split data
+        split_idx = int(len(df) * train_ratio)
+        y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
+        y_reg_train, y_reg_test = y.iloc[:split_idx], y.iloc[split_idx:]
+        y_class_train, y_class_test = y_class.iloc[:split_idx], y_class.iloc[split_idx:]
+        
+        # Get all feature columns (exclude targets and non-feature columns)
+        exclude = ['forward_1m', 'forward_3m', 'z_composite_lag1', 'z_composite_lag2']
+        feature_cols = [c for c in df.columns if c not in exclude]
+        
+        # Test each feature individually
+        for feature in feature_cols:
+            X = df[[feature]].copy()
+            
+            # Skip if all NaN
+            if X.isna().all().any():
+                continue
+            
+            X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
+            
+            # --- FIX: Align indices properly ---
+            # Get common index for train and test separately
+            train_common_idx = X_train.index.intersection(y_train.index)
+            test_common_idx = X_test.index.intersection(y_test.index)
+            
+            # Drop NaN values
+            X_train_clean = X_train.loc[train_common_idx].dropna()
+            y_train_clean = y_train.loc[train_common_idx].loc[X_train_clean.index]
+            y_class_train_clean = y_class_train.loc[train_common_idx].loc[X_train_clean.index]
+            
+            X_test_clean = X_test.loc[test_common_idx].dropna()
+            y_test_clean = y_test.loc[test_common_idx].loc[X_test_clean.index]
+            y_class_test_clean = y_class_test.loc[test_common_idx].loc[X_test_clean.index]
+            
+            # Skip if not enough data
+            if len(X_train_clean) < 50 or len(X_test_clean) < 5:
+                continue
+            
+            # Convert to numpy arrays
+            X_train_arr = X_train_clean.values.reshape(-1, 1)
+            X_test_arr = X_test_clean.values.reshape(-1, 1)
+            y_class_train_arr = y_class_train_clean.values
+            y_class_test_arr = y_class_test_clean.values
+            y_reg_train_arr = y_train_clean.values
+            y_reg_test_arr = y_test_clean.values
+            
+            try:
+                # Logistic
+                log_model = LogisticRegression(random_state=42, max_iter=1000)
+                log_model.fit(X_train_arr, y_class_train_arr)
+                y_pred = log_model.predict(X_test_arr)
+                f1 = f1_score(y_class_test_arr, y_pred, zero_division=0)
+                
+                # Linear
+                lin_model = LinearRegression()
+                lin_model.fit(X_train_arr, y_reg_train_arr)
+                y_pred_lin = lin_model.predict(X_test_arr)
+                r2 = r2_score(y_reg_test_arr, y_pred_lin)
+                
+                results_rows.append({
+                    'factor': factor,
+                    'feature': feature,
+                    'f1': f1,
+                    'r2': r2,
+                    'coefficient': log_model.coef_[0][0],
+                    'n_train': len(X_train_arr),
+                    'n_test': len(X_test_arr)
+                })
+            except Exception as e:
+                continue
+    
+    results_df = pd.DataFrame(results_rows)
+    return results_df
+
+
+
+def run_target_experiment(multi_target_data: dict,
+                           features_to_test: dict = None,
+                           train_ratio: float = 0.8) -> pd.DataFrame:
+    """
+    Test ALL target definitions in one batch.
+    
+    Parameters
+    ----------
+    multi_target_data : dict
+        Output from prepare_multi_target_data()
+    features_to_test : dict
+        Optional: {'momentum': ['hhi_z', 'hhi_log'], 'value': ['correlation_raw']}
+        If None, tests all available features.
+    train_ratio : float
+        0.8 (80/20 split)
+    
+    Returns DataFrame with results for each (factor, feature, target) combination.
+    """
+    from sklearn.linear_model import LogisticRegression, LinearRegression
+    from sklearn.metrics import f1_score, r2_score
+    
+    results_rows = []
+    
+    # Define target columns to test (exclude date and feature columns)
+    target_cols = ['forward_2w', 'forward_4w', 'forward_6w', 'forward_1m', 'forward_3m',
+                   'spearman_6w', 'spearman_3m', 'rolling_ic_6w', 'rolling_ic_3m']
+    
+    for factor in ['momentum', 'value']:
+        df = multi_target_data[factor]
+        if df.empty:
+            continue
+        
+        # Determine which features to test
+        if features_to_test and factor in features_to_test:
+            feature_cols = features_to_test[factor]
+        else:
+            # Default: test all feature columns (exclude targets and lagged)
+            exclude = target_cols + ['z_composite_lag1', 'z_composite_lag2']
+            feature_cols = [c for c in df.columns if c not in exclude]
+        
+        # Split data
+        split_idx = int(len(df) * train_ratio)
+        
+        # Test each feature
+        for feature in feature_cols:
+            X = df[[feature]].copy()
+            
+            # Skip if all NaN
+            if X.isna().all().any():
+                continue
+            
+            X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
+            
+            # Test each target
+            for target in target_cols:
+                if target not in df.columns:
+                    continue
+                
+                y = df[target]
+                y_class = (y < 0).astype(int)
+                
+                y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
+                y_class_train, y_class_test = y_class.iloc[:split_idx], y_class.iloc[split_idx:]
+                
+                # Align indices
+                train_common_idx = X_train.index.intersection(y_train.index)
+                test_common_idx = X_test.index.intersection(y_test.index)
+                
+                X_train_clean = X_train.loc[train_common_idx].dropna()
+                y_train_clean = y_train.loc[train_common_idx].loc[X_train_clean.index]
+                y_class_train_clean = y_class_train.loc[train_common_idx].loc[X_train_clean.index]
+                
+                X_test_clean = X_test.loc[test_common_idx].dropna()
+                y_test_clean = y_test.loc[test_common_idx].loc[X_test_clean.index]
+                y_class_test_clean = y_class_test.loc[test_common_idx].loc[X_test_clean.index]
+                
+                if len(X_train_clean) < 50 or len(X_test_clean) < 5:
+                    continue
+                
+                X_train_arr = X_train_clean.values.reshape(-1, 1)
+                X_test_arr = X_test_clean.values.reshape(-1, 1)
+                
+                try:
+                    # Logistic
+                    log_model = LogisticRegression(random_state=42, max_iter=1000)
+                    log_model.fit(X_train_arr, y_class_train_clean.values)
+                    y_pred = log_model.predict(X_test_arr)
+                    f1 = f1_score(y_class_test_clean.values, y_pred, zero_division=0)
+                    
+                    # Linear
+                    lin_model = LinearRegression()
+                    lin_model.fit(X_train_arr, y_train_clean.values)
+                    y_pred_lin = lin_model.predict(X_test_arr)
+                    r2 = r2_score(y_test_clean.values, y_pred_lin)
+                    
+                    results_rows.append({
+                        'factor': factor,
+                        'feature': feature,
+                        'target': target,
+                        'f1': f1,
+                        'r2': r2,
+                        'coefficient': log_model.coef_[0][0],
+                        'n_train': len(X_train_arr),
+                        'n_test': len(X_test_arr)
+                    })
+                except Exception as e:
+                    continue
+    
+    results_df = pd.DataFrame(results_rows)
+    return results_df
+
+
+def print_target_experiment_results(results_df: pd.DataFrame):
+    """
+    Print formatted results from target experiment.
+    """
+    print("\n" + "="*80)
+    print("BATCH 2: TARGET DEFINITION EXPERIMENT RESULTS")
+    print("="*80)
+    
+    # Group by factor
+    for factor in ['momentum', 'value']:
+        factor_results = results_df[results_df['factor'] == factor]
+        if factor_results.empty:
+            continue
+        
+        print(f"\n{factor.upper()} FACTOR")
+        print("-"*60)
+        
+        # Best feature-target combination by F1
+        best_f1 = factor_results.loc[factor_results['f1'].idxmax()]
+        print(f"\n  BEST BY F1:")
+        print(f"    Feature: {best_f1['feature']}")
+        print(f"    Target: {best_f1['target']}")
+        print(f"    F1: {best_f1['f1']:.4f}")
+        print(f"    R²: {best_f1['r2']:.4f}")
+        print(f"    Coefficient: {best_f1['coefficient']:.4f}")
+        
+        # Best by R²
+        best_r2 = factor_results.loc[factor_results['r2'].idxmax()]
+        print(f"\n  BEST BY R²:")
+        print(f"    Feature: {best_r2['feature']}")
+        print(f"    Target: {best_r2['target']}")
+        print(f"    R²: {best_r2['r2']:.4f}")
+        print(f"    F1: {best_r2['f1']:.4f}")
+        
+        # Top 5 by F1
+        print(f"\n  TOP 5 (F1):")
+        top5 = factor_results.nlargest(5, 'f1')[['feature', 'target', 'f1', 'r2']]
+        for _, row in top5.iterrows():
+            print(f"    {row['feature']:<20} + {row['target']:<15} F1={row['f1']:.4f}  R²={row['r2']:.4f}")
+        
+        # Top 5 by R²
+        print(f"\n  TOP 5 (R²):")
+        top5_r2 = factor_results.nlargest(5, 'r2')[['feature', 'target', 'f1', 'r2']]
+        for _, row in top5_r2.iterrows():
+            print(f"    {row['feature']:<20} + {row['target']:<15} F1={row['f1']:.4f}  R²={row['r2']:.4f}")
+        
+        # Summary by target (average across features)
+        print(f"\n  AVERAGE F1 BY TARGET:")
+        target_avg = factor_results.groupby('target')['f1'].mean().sort_values(ascending=False)
+        for target, avg_f1 in target_avg.items():
+            print(f"    {target:<15}: {avg_f1:.4f}")
+        
+        # Summary by feature (average across targets)
+        print(f"\n  AVERAGE F1 BY FEATURE:")
+        feature_avg = factor_results.groupby('feature')['f1'].mean().sort_values(ascending=False)
+        for feature, avg_f1 in feature_avg.items():
+            print(f"    {feature:<20}: {avg_f1:.4f}")
+
+
+
+            
+
+def print_feature_experiment_results(results_df: pd.DataFrame):
+    """
+    Print formatted results from feature transform experiment.
+    """
+    print("\n" + "="*80)
+    print("FEATURE TRANSFORM EXPERIMENT RESULTS")
+    print("="*80)
+    
+    for factor in ['momentum', 'value']:
+        factor_results = results_df[results_df['factor'] == factor]
+        if factor_results.empty:
+            continue
+        
+        print(f"\n{factor.upper()} FACTOR")
+        print("-"*50)
+        print(f"  Total features tested: {len(factor_results)}")
+        
+        # Best by F1
+        best_f1 = factor_results.loc[factor_results['f1'].idxmax()]
+        print(f"\n  BEST BY F1:")
+        print(f"    Feature: {best_f1['feature']}")
+        print(f"    F1: {best_f1['f1']:.4f}")
+        print(f"    R²: {best_f1['r2']:.4f}")
+        print(f"    Coefficient: {best_f1['coefficient']:.4f}")
+        
+        # Best by R²
+        best_r2 = factor_results.loc[factor_results['r2'].idxmax()]
+        print(f"\n  BEST BY R²:")
+        print(f"    Feature: {best_r2['feature']}")
+        print(f"    R²: {best_r2['r2']:.4f}")
+        print(f"    F1: {best_r2['f1']:.4f}")
+        print(f"    Coefficient: {best_r2['coefficient']:.4f}")
+        
+        # Top 5 by F1
+        print(f"\n  TOP 5 FEATURES BY F1:")
+        top5 = factor_results.nlargest(5, 'f1')[['feature', 'f1', 'r2', 'coefficient']]
+        for _, row in top5.iterrows():
+            print(f"    {row['feature']:<25} F1={row['f1']:.4f}  R²={row['r2']:.4f}  Coef={row['coefficient']:.4f}")
+        
+        # Baseline comparison
+        baseline = factor_results[factor_results['feature'] == 'correlation_raw']
+        if not baseline.empty:
+            baseline_f1 = baseline['f1'].values[0]
+            best_f1_val = best_f1['f1']
+            improvement = best_f1_val - baseline_f1
+            print(f"\n  BASELINE COMPARISON (vs correlation_raw):")
+            print(f"    Baseline F1: {baseline_f1:.4f}")
+            print(f"    Best F1: {best_f1_val:.4f} ({best_f1['feature']})")
+            print(f"    Improvement: {improvement:+.4f}")
+            if improvement > 0.05:
+                print(f"    ✅ Significant improvement found!")
+            elif improvement > 0.01:
+                print(f"    △ Small improvement found")
+            else:
+                print(f"    ✗ No meaningful improvement")
+
+
 
 
 def _run_baseline_models(X_train, X_test, y_reg_train, y_reg_test,

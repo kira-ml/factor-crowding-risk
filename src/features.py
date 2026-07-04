@@ -340,6 +340,236 @@ def prepare_model_data(features: dict, factor_returns: pd.DataFrame, add_lags: b
     return model_data
 
 
+
+
+def prepare_multi_target_data(features: dict, factor_returns: pd.DataFrame) -> dict:
+    """
+    Prepare data with MULTIPLE target definitions in one pass.
+    
+    Returns dict with:
+        - Same features aligned with multiple target definitions
+        - All targets available in the same DataFrame
+    """
+    model_data = {}
+    
+    for factor in ['momentum', 'value']:
+        feat_df = features[factor]
+        
+        if feat_df.empty:
+            model_data[factor] = pd.DataFrame()
+            continue
+        
+        # Get daily factor returns
+        factor_ret_series = factor_returns[factor]
+        
+        target_data = []
+        
+        for date in feat_df.index:
+            # Define various forward horizons
+            horizons = {
+                'forward_2w': pd.DateOffset(weeks=2),
+                'forward_4w': pd.DateOffset(weeks=4),
+                'forward_6w': pd.DateOffset(weeks=6),
+                'forward_1m': pd.DateOffset(months=1),
+                'forward_3m': pd.DateOffset(months=3),
+                'forward_6w_ic': pd.DateOffset(weeks=6),   # For Spearman
+                'forward_3m_ic': pd.DateOffset(months=3),   # For Spearman
+            }
+            
+            row = {'date': date}
+            
+            # Raw cumulative returns for each horizon
+            for name, offset in horizons.items():
+                if 'ic' not in name:  # Raw returns
+                    end_date = date + offset
+                    ret = _get_forward_return(factor_ret_series, date, end_date)
+                    row[name] = ret
+            
+            # Spearman rank IC (use rolling rank correlation)
+            # Use 6-week and 3-month windows
+            row['spearman_6w'] = _get_spearman_ic(factor_ret_series, date, pd.DateOffset(weeks=6))
+            row['spearman_3m'] = _get_spearman_ic(factor_ret_series, date, pd.DateOffset(months=3))
+            
+            # Rolling average IC (smoother target)
+            row['rolling_ic_3m'] = _get_rolling_ic(factor_ret_series, date, pd.DateOffset(months=3))
+            row['rolling_ic_6w'] = _get_rolling_ic(factor_ret_series, date, pd.DateOffset(weeks=6))
+            
+            target_data.append(row)
+        
+        targets_df = pd.DataFrame(target_data)
+        targets_df.set_index('date', inplace=True)
+        
+        # Combine features with targets
+        combined = feat_df.join(targets_df)
+        combined = combined.dropna()
+        model_data[factor] = combined
+    
+    return model_data
+
+
+def _get_spearman_ic(series: pd.Series, start_date: pd.Timestamp, window: pd.DateOffset) -> float:
+    """
+    Compute Spearman rank IC over a rolling window.
+    Measures consistency of factor returns over time.
+    """
+    end_date = start_date + window
+    try:
+        window_returns = series.loc[(series.index > start_date) & (series.index <= end_date)]
+        if len(window_returns) < 5:
+            return np.nan
+        
+        # Create ranks
+        ranks = window_returns.rank()
+        
+        # Spearman correlation with time (is performance consistent?)
+        time_rank = np.arange(1, len(ranks) + 1)
+        spearman = np.corrcoef(ranks.values, time_rank)[0, 1]
+        
+        return spearman if not np.isnan(spearman) else np.nan
+    except:
+        return np.nan
+
+
+def _get_rolling_ic(series: pd.Series, start_date: pd.Timestamp, window: pd.DateOffset) -> float:
+    """
+    Compute rolling average of forward returns over a window.
+    Smoothed target - less noisy.
+    """
+    end_date = start_date + window
+    try:
+        returns = series.loc[(series.index > start_date) & (series.index <= end_date)]
+        if len(returns) < 5:
+            return np.nan
+        return returns.mean()
+    except:
+        return np.nan
+    
+
+    
+
+
+def engineer_transformed_features(prices: pd.DataFrame,
+                                   factor_returns: pd.DataFrame,
+                                   rebalance_freq: str = 'weekly',
+                                   window_days: int = 60,
+                                   quintile_pct: float = 0.2) -> dict:
+    """
+    Generate ALL feature transformations in one pass.
+    
+    Returns dict with:
+        - Each transformed feature as a separate column
+        - All features aligned on same dates
+    """
+    # First, get base features using existing function
+    base_features = engineer_features(
+        prices, factor_returns, rebalance_freq, window_days, quintile_pct
+    )
+    
+    transformed_features = {}
+    
+    for factor in ['momentum', 'value']:
+        df = base_features[factor].copy()
+        
+        if df.empty:
+            transformed_features[factor] = df
+            continue
+        
+        # Start with raw features
+        result = pd.DataFrame(index=df.index)
+        result['correlation_raw'] = df['correlation']
+        result['hhi_raw'] = df['hhi']
+        result['valuation_spread_raw'] = df['valuation_spread']
+        
+        # --- CORRELATION TRANSFORMS ---
+        
+        # 1. Squared
+        result['correlation_sq'] = df['correlation'] ** 2
+        
+        # 2. Rolling percentile rank (relative crowding)
+        result['correlation_rank'] = df['correlation'].rolling(20, min_periods=5).apply(
+            lambda x: (x.iloc[-1] - x.min()) / (x.max() - x.min()) if x.max() > x.min() else 0.5
+        )
+        
+        # 3. Delta (change from 4 weeks ago)
+        result['correlation_delta'] = df['correlation'] - df['correlation'].shift(4)
+        
+        # 4. Rolling standard deviation (stability)
+        result['correlation_std'] = df['correlation'].rolling(12, min_periods=5).std()
+        
+        # --- HHI TRANSFORMS ---
+        
+        # 5. Log transform
+        result['hhi_log'] = np.log(df['hhi'] + 1e-10)
+        
+        # 6. Rolling percentile rank
+        result['hhi_rank'] = df['hhi'].rolling(20, min_periods=5).apply(
+            lambda x: (x.iloc[-1] - x.min()) / (x.max() - x.min()) if x.max() > x.min() else 0.5
+        )
+        
+        # 7. HHI delta
+        result['hhi_delta'] = df['hhi'] - df['hhi'].shift(4)
+        
+        # --- INTERACTION TERMS ---
+        
+        # 8. Correlation × HHI
+        result['corr_hhi_interaction'] = df['correlation'] * df['hhi']
+        
+        # 9. Correlation × Valuation Spread
+        result['corr_val_interaction'] = df['correlation'] * df['valuation_spread']
+        
+        # --- NORMALIZED VERSIONS (for comparison) ---
+        
+        # 10. Z-score of correlation
+        corr_mean = df['correlation'].mean()
+        corr_std = df['correlation'].std()
+        result['correlation_z'] = (df['correlation'] - corr_mean) / corr_std if corr_std > 0 else 0
+        
+        # 11. Z-score of HHI
+        hhi_mean = df['hhi'].mean()
+        hhi_std = df['hhi'].std()
+        result['hhi_z'] = (df['hhi'] - hhi_mean) / hhi_std if hhi_std > 0 else 0
+        
+        # 12. Z-score of valuation spread
+        val_mean = df['valuation_spread'].mean()
+        val_std = df['valuation_spread'].std()
+        result['valuation_spread_z'] = (df['valuation_spread'] - val_mean) / val_std if val_std > 0 else 0
+        
+        # 13. Z-composite (existing)
+        result['z_composite'] = df['z_composite']
+        
+        # Drop rows with all NaNs
+        result = result.dropna(how='all')
+        
+        transformed_features[factor] = result
+    
+    return transformed_features
+
+
+
+
+def print_transformed_features_summary(features_transformed: dict):
+    """
+    Quick summary of what features were generated.
+    """
+    print("\n" + "="*70)
+    print("TRANSFORMED FEATURES SUMMARY")
+    print("="*70)
+    
+    for factor, df in features_transformed.items():
+        print(f"\n{factor.upper()} FACTOR:")
+        print(f"  Rows: {len(df)}")
+        print(f"  Features: {len(df.columns)}")
+        print(f"  Feature names: {list(df.columns)}")
+        
+        # Show first few rows
+        print(f"\n  Sample data (first 3 rows):")
+        print(df.head(3).to_string())
+
+
+
+
+
+
 def _get_forward_return(series: pd.Series, start_date: pd.Timestamp, end_date: pd.Timestamp) -> float:
     """
     Get cumulative return between two dates.
