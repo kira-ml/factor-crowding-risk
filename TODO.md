@@ -640,4 +640,114 @@ All results saved in `outputs/` with timestamps:
    - Summary of what worked and what didn't
    - Recommendations for future work
 
-```
+
+
+
+### 5. Visualizations (Day 2 — Continued)
+**Status:** ✅ Complete  
+**Date Completed:** July 5, 2026
+
+**Description:**
+- Created 4 core visualizations using quant finance styling:
+  1. **Crowding Signal Over Time** — Shows crowding episodes with 75th percentile threshold
+  2. **Cumulative Returns Comparison** — Static vs Crowding-aware strategy performance
+  3. **Drawdown Comparison** — Risk reduction comparison with max drawdown marked
+  4. **Crowding vs Forward Return** — Scatter plot with regression line
+
+**Key Results from Visualizations:**
+
+| Metric | Static Strategy | Crowding-Aware Strategy | Improvement |
+|--------|----------------|------------------------|-------------|
+| Total Return | -10.46% | -7.02% | +3.43% |
+| Sharpe Ratio | -0.1666 | -0.1180 | +0.0486 |
+| Max Drawdown | -26.88% | -22.72% | -4.16% |
+| Annualized Volatility | 8.95% | 7.92% | +1.03% |
+| Average Exposure | 100.0% | 82.1% | -17.9% |
+| Crowded Periods | N/A | 25.0% | N/A |
+
+**What We Learned:**
+- ✅ Crowding-aware strategy reduced max drawdown by 4.16%
+- ✅ Sharpe ratio improved by 0.0486
+- ✅ Total return improved by 3.43%
+- ✅ Volatility decreased by 1.03%
+- ✅ Strategy was more conservative (82.1% average exposure)
+
+**Justification:**
+- Visualizations translate results into portfolio management language
+- Quant finance styling (Times font, professional colors) for presentation quality
+- All 4 visuals saved to `outputs/` directory
+
+---
+
+### 6. PDF Paper Generation (Day 2 — Continued)
+**Status:** ✅ Complete  
+**Date Completed:** July 5, 2026
+
+**Description:**
+- Generated academic-style PDF report documenting the complete project
+- 10-page paper with: Title page, Abstract, Introduction, Methodology, Results, Figures, Discussion, Limitations, Conclusion, References
+- Times font (academic standard)
+- All 4 visualizations embedded
+- Results tables from TODO.md included
+
+**Paper Structure:**
+
+| Section | Content |
+|---------|---------|
+| Title Page | Project title, author, affiliation, disclaimer |
+| Abstract | 200-word summary of the project |
+| 1. Introduction | Problem statement, motivation, research question |
+| 2. Methodology | Data, features, modeling approach, evaluation |
+| 3. Results | Feature transforms, target definitions, trading strategy, detailed tables |
+| 4. Figures | 4 visualizations with captions |
+| 5. Discussion | Interpretation, limitations |
+| 6. Limitations | 7 specific limitations documented |
+| 7. Conclusion | Summary and future work |
+| References | 4 academic sources |
+
+**Writing Style:**
+- Neutral, objective, evidence-based tone
+- No exaggerated claims or overstatement
+- Accurate reflection of project scope
+- Honest documentation of limitations
+
+**File Generated:**
+- `outputs/factor_crowding_risk_project_report.pdf`
+
+**Justification:**
+- Permanent documentation of the complete project
+- Professional format for portfolio presentation
+- Honest and accurate reflection of work done
+
+---
+
+### Additional Files Generated (Day 2)
+
+| File | Description |
+|------|-------------|
+| `run_visualizations.py` | Visualization generation script |
+| `generate_paper.py` | PDF paper generation script |
+| `visualization_1_crowding_signal_over_time.png` | Crowding signal plot |
+| `visualization_2_cumulative_returns_comparison.png` | Returns comparison |
+| `visualization_3_drawdown_comparison.png` | Drawdown comparison |
+| `visualization_4_crowding_vs_forward_return.png` | Scatter plot |
+| `metrics_table.csv` | Performance metrics |
+| `factor_crowding_risk_project_report.pdf` | Complete project paper |
+
+---
+
+### Updated Time Invested (Day 2)
+
+| Activity | Time |
+|----------|------|
+| Batch 1: Feature Transforms | ~1 hour |
+| Batch 2: Target Definitions | ~1 hour |
+| Binary Backtests | ~1 hour |
+| Batch 3: Continuous Sizing | ~1.5 hours |
+| Visualizations | ~1 hour |
+| PDF Paper Generation | ~1 hour |
+| Documentation | ~1.5 hours |
+| **Total** | **~8 hours** |
+
+**Cumulative Total (Day 1 + Day 2):** ~16 hours
+
