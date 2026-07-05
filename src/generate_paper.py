@@ -188,8 +188,8 @@ def generate_pdf():
         "regression F1 score of 0.9483 (out-of-sample precision: 0.96, recall: 0.94) "
         "when predicting 3-month forward returns. "
         "A trading strategy using continuous position sizing based on linear "
-        "regression predictions showed a Sharpe ratio improvement of +0.0486 "
-        "and a max drawdown reduction of 4.16% compared to a static allocation "
+        "regression predictions showed a Sharpe ratio improvement of +0.0182 "
+        "and a max drawdown reduction of 2.82% compared to a static allocation "
         "in the backtest. The Momentum factor exhibited a weaker signal, with "
         "best F1 of 0.6593. This report documents the methodology, results, "
         "and limitations of the work."
@@ -253,7 +253,7 @@ def generate_pdf():
         "The analysis uses daily adjusted close prices for S&P 500 constituents "
         "from January 2018 to December 2024. Data was obtained through the "
         "yfinance library. The initial universe consisted of 503 stocks, with "
-        "final usable data for 498 stocks after accounting for delistings and "
+        "final usable data for 499 stocks after accounting for delistings and "
         "IPOs. While price data was downloaded from January 2018, feature "
         "construction required a 12-month lookback for momentum scores and "
         "60-day windows for correlation, resulting in usable observations "
@@ -477,9 +477,9 @@ def generate_pdf():
     story.append(Paragraph(
         "Continuous position sizing using linear regression predictions "
         "showed different results. The Value strategy showed a Sharpe ratio "
-        "improvement of +0.0486 and a max drawdown reduction of 4.16% "
+        "improvement of +0.0182 and a max drawdown reduction of 2.82% "
         "compared to the static allocation in the backtest. Total return "
-        "improved by 3.43% and volatility decreased by 1.03% in this sample.",
+        "improved by 2.32% and volatility decreased by 1.06% in this sample.",
         body_style
     ))
     
@@ -511,7 +511,7 @@ def generate_pdf():
     # Table: Continuous Results
     data_continuous = [
         ["Test", "Factor", "Sharpe Δ", "Drawdown Δ"],
-        ["Continuous Sizing", "Value", "+0.0486", "-4.16%"],
+        ["Continuous Sizing", "Value", "+0.0182", "-2.82%"],
         ["Decision Tree (Depth 3)", "Value", "+0.0286", "-"],
         ["Decision Tree (Depth 2)", "Value", "+0.0192", "-"],
         ["Decision Tree (Depth 3)", "Momentum", "+0.0043", "-"],
@@ -658,8 +658,8 @@ def generate_pdf():
         "The results suggest that crowding signals for the Value factor may "
         "be measurable using publicly available data. The continuous sizing "
         "approach showed a modest improvement in risk-adjusted returns in this "
-        "sample, with a Sharpe ratio change of +0.0486 and a max drawdown "
-        "reduction of 4.16%.",
+        "sample, with a Sharpe ratio change of +0.0182 and a max drawdown "
+        "reduction of 2.82%.",
         
         "Binary threshold rules did not perform as well as continuous sizing "
         "in this sample. This may suggest that crowding is not a binary "
@@ -712,7 +712,7 @@ def generate_pdf():
         "sizing.",
         
         "The strategy using continuous sizing showed a Sharpe ratio improvement "
-        "of +0.0486 and a max drawdown reduction of 4.16% in this sample. "
+        "of +0.0182 and a max drawdown reduction of 2.82% in this sample. "
         "However, binary threshold rules did not improve Sharpe ratios, and "
         "the Momentum signal was substantially weaker. These results highlight "
         "that crowding signals may be factor-specific and that simple trading "
