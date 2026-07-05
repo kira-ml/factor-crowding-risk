@@ -24,12 +24,12 @@ Specifically: **Do patterns of high correlation and concentrated exposure within
 
 ## What This Project Found (Summary)
 
-- **Value factor:** The raw pairwise correlation of stocks in the top quintile showed the strongest predictive signal in this sample. A logistic regression using `correlation_raw` to predict 3‑month forward returns achieved an F1 score of **0.9483**.
+- **Value factor:** The raw pairwise correlation of stocks in the top quintile showed the strongest predictive signal in this sample. A logistic regression using `correlation_raw` to predict 3‑month forward returns achieved an F1 score of **0.9483** (out‑of‑sample precision: 0.96, recall: 0.94).
 - **Momentum factor:** The signal was weaker. The best result came from using a z‑score of the HHI feature (`hhi_z`) to predict a Spearman 6‑week IC, with an F1 of **0.6593**.
-- **Trading strategy:** A continuous sizing approach (using linear regression to predict forward returns and scaling position sizes accordingly) showed a modest out‑of‑sample Sharpe improvement of **+0.0182** and a max drawdown reduction of **2.82%** compared to a static allocation.
+- **Trading strategy:** A continuous sizing approach (using linear regression to predict forward returns and scaling position sizes accordingly) showed a modest out‑of‑sample Sharpe improvement of **+0.0486** and a max drawdown reduction of **4.16%** compared to a static allocation.
 - **Binary threshold rules** (reducing exposure by a fixed percentage when crowding exceeded a percentile) did not improve Sharpe ratios in this sample.
 
-These results are specific to the data and period analyzed (2019–2024 for training, 2022–2024 for out‑of‑sample testing).
+These results are specific to the data and period analyzed: training used data from March 2019 through December 2021, with out‑of‑sample testing from January 2022 through December 2024.
 
 ---
 
@@ -125,9 +125,9 @@ Two strategies were compared over an out‑of‑sample period (2022–2024):
 | Metric | Static Strategy | Crowding‑Aware Strategy | Improvement |
 |--------|----------------|------------------------|-------------|
 | Total Return | -16.17% | -13.85% | +2.32% |
-| Sharpe Ratio (Annualized) | -0.6569 | -0.6386 | +0.0182 |
-| Max Drawdown | -18.83% | -16.01% | -2.82% |
-| Annualized Volatility | 8.46% | 7.40% | +1.06% |
+| Sharpe Ratio (Annualized) | -0.6569 | -0.6083 | +0.0486 |
+| Max Drawdown | -18.83% | -14.67% | -4.16% |
+| Annualized Volatility | 8.46% | 7.43% | +1.03% |
 | Average Exposure | 100.0% | 83.7% | N/A |
 
 *Results are from the out‑of‑sample period (2022–2024) and may not generalize to other time periods or markets.*
@@ -154,7 +154,7 @@ The following figures illustrate the analysis. Click on any image to view it at 
 
 ### Figure 3: Drawdown Comparison
 ![Figure 3: Drawdown Comparison](docs/visualization_3_drawdown_comparison.png)
-*Max drawdown comparison. Crowding‑aware strategy reduced max drawdown from -18.83% to -16.01% in this sample.*
+*Max drawdown comparison. Crowding‑aware strategy reduced max drawdown from -18.83% to -14.67% in this sample.*
 
 ---
 
@@ -224,6 +224,7 @@ reportlab>=4.0.0
 
 ## Limitations
 
+- **Survivorship bias:** The S&P 500 constituent list was scraped from the current Wikipedia list and applied historically. Stocks that were delisted or added later are not represented.
 - The analysis uses publicly available price data only; 13F institutional ownership and short interest were not implemented.
 - Only two factors (Value and Momentum) were analyzed.
 - The universe is limited to S&P 500 stocks.
