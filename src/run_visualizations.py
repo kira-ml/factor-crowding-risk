@@ -134,32 +134,43 @@ print(f"  Date range: {X.index[0].strftime('%Y-%m-%d')} to {X.index[-1].strftime
 # ---------------------------------------------------------------------------
 # 2. TRAIN MODEL & GENERATE PREDICTIONS
 # ---------------------------------------------------------------------------
-print("\n2. GENERATING STRATEGY RETURNS...")
+print("\n2. GENERATING STRATEGY RETURNS (OUT-OF-SAMPLE)...")
 
 from sklearn.linear_model import LinearRegression
 
-# Train on full data
+# Prepare data
 X_clean = X.dropna()
 y_clean = y.loc[X_clean.index]
 
+# Split: train on 2019–2021, test on 2022–2024
+train_cutoff = "2021-12-31"
+train_mask = X_clean.index <= pd.Timestamp(train_cutoff)
+test_mask = X_clean.index > pd.Timestamp(train_cutoff)
+
+X_train = X_clean[train_mask]
+y_train = y_clean.loc[X_train.index]
+X_test = X_clean[test_mask]
+y_test = y_clean.loc[X_test.index]
+
+# Train on train period only
 model = LinearRegression()
-model.fit(X_clean.values.reshape(-1, 1), y_clean.values)
+model.fit(X_train.values.reshape(-1, 1), y_train.values)
 
-# Predict forward returns
-y_pred = model.predict(X_clean.values.reshape(-1, 1))
+# Predict on test period
+y_pred_test = model.predict(X_test.values.reshape(-1, 1))
 
-# Map predictions to weights (continuous sizing)
-y_pred_scaled = (y_pred - y_pred.min()) / (y_pred.max() - y_pred.min() + 1e-10)
+# Map predictions to weights (continuous sizing) — test period only
+y_pred_scaled = (y_pred_test - y_pred_test.min()) / (y_pred_test.max() - y_pred_test.min() + 1e-10)
 weights = 0.7 + 0.3 * y_pred_scaled
 weights = np.clip(weights, 0.5, 1.0)
 
-# Align returns
-factor_ret_aligned = factor_ret_value.loc[X_clean.index]
+# Align returns to test period
+factor_ret_aligned = factor_ret_value.loc[X_test.index]
 
-# Static strategy (100% invested)
+# Static strategy (100% invested) — test period
 static_returns = factor_ret_aligned
 
-# Dynamic strategy (continuous sizing)
+# Dynamic strategy (continuous sizing) — test period
 dynamic_returns = factor_ret_aligned * weights
 
 # Calculate metrics

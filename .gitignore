@@ -53,7 +53,6 @@ data/
 outputs/
 *.png
 *.jpg
-*.pdf
 *.pkl
 *.joblib
 !outputs/.gitkeep

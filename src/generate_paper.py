@@ -14,17 +14,18 @@ from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    Image, ListFlowable, ListItem, PageBreak
+    Image, ListFlowable, ListItem, PageBreak, PageTemplate, Frame
 )
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
+from reportlab.pdfgen import canvas
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 
-OUTPUT_PDF = os.path.join("outputs", "factor_crowding_risk_project_report.pdf")
-OUTPUT_DIR = "outputs"
+OUTPUT_PDF = os.path.join("docs", "factor_crowding_risk_project_report.pdf")
+OUTPUT_DIR = "docs"
 
 IMAGES = {
     "crowding_signal": os.path.join(OUTPUT_DIR, "visualization_1_crowding_signal_over_time.png"),
@@ -34,6 +35,21 @@ IMAGES = {
 }
 
 METRICS_CSV = os.path.join(OUTPUT_DIR, "metrics_table.csv")
+
+# ============================================================================
+# PAGE NUMBER FOOTER
+# ============================================================================
+
+def add_page_number(canvas_obj, doc):
+    """Add page number to the bottom center of each page."""
+    canvas_obj.saveState()
+    canvas_obj.setFont('Times-Roman', 9)
+    canvas_obj.drawCentredString(
+        doc.width / 2 + doc.leftMargin,
+        0.4 * inch,
+        f"Page {doc.page}"
+    )
+    canvas_obj.restoreState()
 
 # ============================================================================
 # PDF GENERATION
@@ -56,6 +72,10 @@ def generate_pdf():
         topMargin=0.75*inch,
         bottomMargin=0.75*inch
     )
+    
+    # Attach page number footer
+    doc.onFirstPage = add_page_number
+    doc.onLaterPages = add_page_number
     
     styles = getSampleStyleSheet()
     
@@ -109,13 +129,6 @@ def generate_pdf():
         alignment=TA_JUSTIFY, spaceAfter=6
     )
     
-    body_indent_style = ParagraphStyle(
-        'BodyIndent', parent=styles['Normal'],
-        fontName='Times-Roman', fontSize=10.5,
-        alignment=TA_JUSTIFY, spaceAfter=4,
-        leftIndent=0.2*inch
-    )
-    
     caption_style = ParagraphStyle(
         'Caption', parent=styles['Normal'],
         fontName='Times-Italic', fontSize=9.5,
@@ -142,11 +155,11 @@ def generate_pdf():
     # TITLE PAGE
     # ========================================================================
     
-    story.append(Spacer(1, 1*inch))
+    story.append(Spacer(1, 0.8*inch))
     story.append(Paragraph("Factor Crowding Risk and Alpha Decay Modeling", title_style))
     story.append(Paragraph("A Data Science Project on U.S. Equities", title_style))
     story.append(Spacer(1, 0.5*inch))
-    story.append(Paragraph("Ken Ira Lacson", author_style))
+    story.append(Paragraph("Ken Ira Lacson Talingting", author_style))
     story.append(Paragraph("Portfolio Project — Quantitative Finance and Machine Learning", affiliation_style))
     story.append(Paragraph(datetime.now().strftime('%B %d, %Y'), date_style))
     story.append(Spacer(1, 0.5*inch))
@@ -306,7 +319,7 @@ def generate_pdf():
     # 3. RESULTS
     # ========================================================================
     
-    story.append(PageBreak())
+    # Let content flow naturally — remove PageBreak here
     story.append(Paragraph("3. Results", heading_style))
     
     story.append(Paragraph(
@@ -586,8 +599,8 @@ def generate_pdf():
             story.append(Spacer(1, 0.05*inch))
             story.append(Paragraph(
                 "<b>Figure 2:</b> Cumulative returns comparison between static and "
-                "crowding-aware strategies. Total return changed from -10.46% "
-                "to -7.02% in this sample.",
+                "crowding-aware strategies. Total return changed from -16.17% "
+                "to -13.85% in this sample.",
                 caption_style
             ))
             story.append(Spacer(1, 0.15*inch))
@@ -602,8 +615,8 @@ def generate_pdf():
             story.append(Spacer(1, 0.05*inch))
             story.append(Paragraph(
                 "<b>Figure 3:</b> Drawdown comparison between static and crowding-aware "
-                "strategies. Maximum drawdown was -26.88% for static and "
-                "-22.72% for crowding-aware in this sample.",
+                "strategies. Maximum drawdown was -18.83% for static and "
+                "-16.01% for crowding-aware in this sample.",
                 caption_style
             ))
             story.append(Spacer(1, 0.15*inch))
@@ -619,7 +632,7 @@ def generate_pdf():
             story.append(Paragraph(
                 "<b>Figure 4:</b> Crowding signal vs forward 3-month return. "
                 "The regression line shows a positive relationship in this "
-                "sample (correlation: 0.2811, R²: 0.079).",
+                "sample (correlation: 0.2843, R²: 0.0500).",
                 caption_style
             ))
             story.append(Spacer(1, 0.15*inch))
