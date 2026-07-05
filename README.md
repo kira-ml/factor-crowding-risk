@@ -136,16 +136,31 @@ Two strategies were compared over an out‑of‑sample period (2022–2024):
 
 ## Visualizations
 
-The following figures illustrate the analysis:
+The following figures illustrate the analysis. Click on any image to view it at full resolution.
 
-| Figure | Description |
-|--------|-------------|
-| [Figure 1: Crowding Signal Over Time](docs/visualization_1_crowding_signal_over_time.png) | Value factor crowding signal (pairwise correlation) with 75th percentile threshold. |
-| [Figure 2: Cumulative Returns Comparison](docs/visualization_2_cumulative_returns_comparison.png) | Static vs. crowding‑aware strategy cumulative returns (out‑of‑sample). |
-| [Figure 3: Drawdown Comparison](docs/visualization_3_drawdown_comparison.png) | Max drawdown comparison between static and crowding‑aware strategies. |
-| [Figure 4: Crowding vs. Forward Return Scatter](docs/visualization_4_crowding_vs_forward_return.png) | Relationship between crowding signal and forward 3‑month returns. |
+---
 
-These are available in the `docs/` folder after running `run_visualizations.py`.
+### Figure 1: Crowding Signal Over Time
+![Figure 1: Crowding Signal Over Time](docs/visualization_1_crowding_signal_over_time.png)
+*Value factor crowding signal (pairwise correlation) with 75th percentile threshold. Shaded regions indicate periods identified as crowded.*
+
+---
+
+### Figure 2: Cumulative Returns Comparison
+![Figure 2: Cumulative Returns Comparison](docs/visualization_2_cumulative_returns_comparison.png)
+*Static vs. crowding‑aware strategy cumulative returns (out‑of‑sample, 2022–2024).*
+
+---
+
+### Figure 3: Drawdown Comparison
+![Figure 3: Drawdown Comparison](docs/visualization_3_drawdown_comparison.png)
+*Max drawdown comparison. Crowding‑aware strategy reduced max drawdown from -18.83% to -16.01% in this sample.*
+
+---
+
+### Figure 4: Crowding vs. Forward Return Scatter
+![Figure 4: Crowding vs. Forward Return Scatter](docs/visualization_4_crowding_vs_forward_return.png)
+*Relationship between crowding signal and forward 3‑month returns. Correlation: 0.2843, R²: 0.0500 in this sample.*
 
 ---
 
