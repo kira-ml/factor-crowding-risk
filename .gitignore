@@ -47,15 +47,16 @@ data/
 *.hdf5
 !data/.gitkeep
 
-# ------------------------------------
-# Outputs (generated plots, results, models)
-# ------------------------------------
-outputs/
-*.png
-*.jpg
-*.pkl
-*.joblib
-!outputs/.gitkeep
+
+
+
+# Keep outputs/ ignored, but track docs/ for final deliverables
+docs/
+!docs/
+docs/*
+!docs/*.pdf
+!docs/*.png
+!docs/*.jpg
 
 # ------------------------------------
 # IDE and Editor Files
