@@ -14,7 +14,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    Image, ListFlowable, ListItem, PageBreak, PageTemplate, Frame
+    Image, ListFlowable, ListItem, PageBreak
 )
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
@@ -185,7 +185,8 @@ def generate_pdf():
         "returns. A staged modeling approach was used, starting with baseline "
         "models before testing more complex techniques. The Value factor showed "
         "the strongest predictive signal in this sample, with a logistic "
-        "regression F1 score of 0.9483 when predicting 3-month forward returns. "
+        "regression F1 score of 0.9483 (out-of-sample precision: 0.96, recall: 0.94) "
+        "when predicting 3-month forward returns. "
         "A trading strategy using continuous position sizing based on linear "
         "regression predictions showed a Sharpe ratio improvement of +0.0486 "
         "and a max drawdown reduction of 4.16% compared to a static allocation "
@@ -223,7 +224,7 @@ def generate_pdf():
         
         "The research question is: Can a cross-sectional crowding score for "
         "standard equity factors predict the future decay of that factor's "
-        "information coefficient? Specifically, do anomalous patterns of high "
+        "information coefficient? Specifically, do patterns of elevated "
         "correlation and concentrated exposure within a factor's top-quintile "
         "stocks precede a decline in forward factor performance?"
     ]
@@ -253,15 +254,19 @@ def generate_pdf():
         "from January 2018 to December 2024. Data was obtained through the "
         "yfinance library. The initial universe consisted of 503 stocks, with "
         "final usable data for 498 stocks after accounting for delistings and "
-        "IPOs. Weekly rebalancing was used, yielding 304 observations from "
-        "March 2019 to December 2024.",
+        "IPOs. While price data was downloaded from January 2018, feature "
+        "construction required a 12-month lookback for momentum scores and "
+        "60-day windows for correlation, resulting in usable observations "
+        "beginning March 2019. Weekly rebalancing was used, yielding 304 "
+        "observations from March 2019 to December 2024.",
         body_style
     ))
     
     story.append(Paragraph(
         "Factor returns were constructed for two factors: Momentum (12-1 month) "
-        "and Value (Book-to-Market proxy using inverse momentum). Both factors "
-        "were constructed as long-short portfolios: long the top quintile and "
+        "and Value (proxied by price reversal, using the inverse of momentum "
+        "score as a simple proxy for relative valuation). Both factors were "
+        "constructed as long-short portfolios: long the top quintile and "
         "short the bottom quintile, rebalanced monthly.",
         body_style
     ))
@@ -319,7 +324,6 @@ def generate_pdf():
     # 3. RESULTS
     # ========================================================================
     
-    # Let content flow naturally — remove PageBreak here
     story.append(Paragraph("3. Results", heading_style))
     
     story.append(Paragraph(
@@ -358,7 +362,9 @@ def generate_pdf():
     story.append(table_best_features)
     story.append(Spacer(1, 0.05*inch))
     story.append(Paragraph(
-        "<i>Table 2: Best features by factor from Feature Transform Experiment.</i>",
+        "<i>Table 2: Best features by factor from Feature Transform Experiment. "
+        "Negative R² indicates the model's predictions are less accurate than "
+        "simply predicting the mean of the target variable.</i>",
         caption_style
     ))
     story.append(Spacer(1, 0.1*inch))
@@ -420,7 +426,9 @@ def generate_pdf():
     
     story.append(Paragraph(
         "The Value factor performed best with a 3-month forward return "
-        "target, achieving an F1 score of 0.9483 in this sample.",
+        "target, achieving an F1 score of 0.9483 in this sample. "
+        "This result is from the out-of-sample test period (2022-2024) "
+        "with precision of 0.96 and recall of 0.94.",
         body_style
     ))
     
@@ -503,7 +511,7 @@ def generate_pdf():
     # Table: Continuous Results
     data_continuous = [
         ["Test", "Factor", "Sharpe Δ", "Drawdown Δ"],
-        ["Continuous Sizing", "Value", "+0.0441", "-3.08%"],
+        ["Continuous Sizing", "Value", "+0.0486", "-4.16%"],
         ["Decision Tree (Depth 3)", "Value", "+0.0286", "-"],
         ["Decision Tree (Depth 2)", "Value", "+0.0192", "-"],
         ["Decision Tree (Depth 3)", "Momentum", "+0.0043", "-"],
@@ -649,8 +657,9 @@ def generate_pdf():
     discussion_paragraphs = [
         "The results suggest that crowding signals for the Value factor may "
         "be measurable using publicly available data. The continuous sizing "
-        "approach showed some improvement in risk-adjusted returns in this "
-        "sample, though the magnitude of the improvement is modest.",
+        "approach showed a modest improvement in risk-adjusted returns in this "
+        "sample, with a Sharpe ratio change of +0.0486 and a max drawdown "
+        "reduction of 4.16%.",
         
         "Binary threshold rules did not perform as well as continuous sizing "
         "in this sample. This may suggest that crowding is not a binary "
@@ -677,6 +686,7 @@ def generate_pdf():
     story.append(Paragraph("6. Limitations", heading_style))
     
     limitations_list = ListFlowable([
+        ListItem(Paragraph("<b>Survivorship Bias:</b> The S&P 500 constituent list was scraped from the current Wikipedia list and applied historically. This means stocks that were delisted or added later are not represented, which may introduce survivorship bias.", body_style)),
         ListItem(Paragraph("<b>Data Constraints:</b> The analysis uses publicly available data and does not incorporate proprietary flow data. 13F institutional ownership data was not implemented.", body_style)),
         ListItem(Paragraph("<b>Factor Scope:</b> Only two factors (Value and Momentum) were analyzed. The results may not extend to other factors.", body_style)),
         ListItem(Paragraph("<b>Market Universe:</b> The analysis is limited to S&P 500 stocks. Crowding dynamics may differ in other markets.", body_style)),
@@ -703,9 +713,10 @@ def generate_pdf():
         
         "The strategy using continuous sizing showed a Sharpe ratio improvement "
         "of +0.0486 and a max drawdown reduction of 4.16% in this sample. "
-        "The Momentum factor showed a weaker signal, with best F1 of 0.6593. "
-        "The analysis used a staged, baseline-first approach that prioritized "
-        "interpretability.",
+        "However, binary threshold rules did not improve Sharpe ratios, and "
+        "the Momentum signal was substantially weaker. These results highlight "
+        "that crowding signals may be factor-specific and that simple trading "
+        "rules may not capture the relationship effectively.",
         
         "The work demonstrates a practical approach to examining crowding "
         "risk. The results are specific to the sample and period analyzed. "
