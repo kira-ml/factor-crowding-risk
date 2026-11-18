@@ -358,7 +358,7 @@ factor-crowding-risk/
 - **Generated report**: `docs/report.md` is written by the pipeline, not edited
   by hand. A docs check verifies the README’s headline numbers against the
   generated tables.
-- **CI**: GitHub Actions runs the 40 tests on Python 3.10 and 3.11.
+- **CI**: GitHub Actions runs the 40 tests and `ruff` on Python 3.10 and 3.11.
 
 The raw data cache is not committed. To reproduce the exact panel, use the same
 `yfinance` snapshot; the manifest tells you whether your panel hash matches.
