@@ -1,6 +1,6 @@
 # Crowded Exits: Results
 
-*Generated 2026-11-18 13:47 UTC from run `adda1236ef50_20261118T133546Z`. Every number below is produced by the pipeline.*
+*Generated 2026-11-18 14:19 UTC from run `adda1236ef50_20261118T140421Z`. Every number below is produced by the pipeline.*
 
 ## 1. Answer
 
@@ -202,6 +202,12 @@ Per-factor estimates at the 0.10 quantile (exploratory):
 | 2010-2017 | 1.0190 | -0.0840 | 1.8390 | 1251 |
 | 2018-2025 | -1.2010 | -2.6780 | 0.1420 | 1215 |
 
+**Non-overlapping check:** the same specification on every fourth week, so the four-week target windows do not overlap.
+
+| specification | estimate | se | ci_low | ci_high | n_dates | n_rows |
+| --- | --- | --- | --- | --- | --- | --- |
+| every_fourth_week | -1.0060 | 1.1080 | -3.6090 | 0.9190 | 232 | 695 |
+
 Individual measures, Benjamini-Hochberg adjusted across the pre-specified family of four measures and two horizons. P-values are centered bootstrap p-values.
 
 | horizon | measure | estimate | se | ci_low | ci_high | pvalue | n | pvalue_adj | reject |
@@ -346,10 +352,10 @@ The final specification was not frozen before the results were seen. The factor 
 
 ```json
 {
-  "run_id": "adda1236ef50_20261118T133546Z",
-  "created_utc": "2026-11-18T13:47:34.602271+00:00",
+  "run_id": "adda1236ef50_20261118T140421Z",
+  "created_utc": "2026-11-18T14:19:06.327234+00:00",
   "config_hash": "adda1236ef50",
-  "git_commit": "37b7f08",
+  "git_commit": "9bed1bc",
   "git_dirty": false,
   "versions": {
     "python": "3.10.0",
@@ -378,7 +384,7 @@ The final specification was not frozen before the results were seen. The factor 
     "fragility_composite": 941,
     "study": 2780
   },
-  "elapsed_seconds": 708.9,
+  "elapsed_seconds": 885.6,
   "repro_passes": true
 }
 ```
