@@ -1,5 +1,9 @@
 # V1 Audit: Why the Original Result Cannot Stand
 
+> **Archived source:** V1 code is preserved at `docs/archive/v1/src/`. The
+> line references below refer to the V1 files at commit `298dc6c`, before the
+> v2.1 tree moved them into the archive.
+
 **Scope:** every file at commit `298dc6c`, including all source modules and the recorded
 result files in `outputs/`.
 **Method:** read the source, re-derived each reported metric from the code path that
