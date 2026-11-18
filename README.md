@@ -6,11 +6,12 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-v2.1%20portfolio--ready-blue)
 
-A point-in-time, leakage-audited study of momentum, short-term reversal, and low
-volatility in US equities, 2005-2025. The project measures the exit risk and
-capital capacity of factor portfolios, tests whether a price-based fragility
-proxy adds information about the left tail beyond volatility, and reports what
-the data support — including a negative result.
+A leakage-audited study of momentum, short-term reversal, and low volatility in
+US equities, 2005-2025, with a point-in-time liquidity universe and a disclosed
+survivor-only sample. The project measures the exit risk and capital capacity of
+factor portfolios, tests whether a price-based fragility proxy adds information
+about the left tail beyond volatility, and reports what the data support -
+including a negative result.
 
 The short version: **the fragility proxy does not beat volatility management,
 and the capacity numbers are model outputs, not measurements.** The value of the
