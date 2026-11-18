@@ -1,55 +1,13 @@
-# ============================================================
-# factor-crowding-risk
-# Measuring the Crowd: Detecting Factor Capacity Risk
-# and Modeling Alpha Decay in U.S. Equities
-# ============================================================
-# Author: Ken Ira Lacson
-# GitHub: https://github.com/kira-ml
-# LinkedIn: https://www.linkedin.com/in/ken-ira-lacson-852026343/
-# ============================================================
-
-# ------------------------------------
-# Core Data Manipulation
-# ------------------------------------
-pandas>=1.5.0,<3.0.0
-numpy>=1.23.0,<2.0.0
-
-# ------------------------------------
-# Data Acquisition
-# ------------------------------------
-yfinance>=0.2.31
-requests>=2.28.0
-
-# ------------------------------------
-# Machine Learning - Baseline Models
-# ------------------------------------
-scikit-learn>=1.2.0,<1.6.0
-
-# ------------------------------------
-# Machine Learning - Advanced Models
-# ------------------------------------
-lightgbm>=4.0.0
-
-# ------------------------------------
-# Statistical Analysis
-# ------------------------------------
-scipy>=1.9.0
-statsmodels>=0.14.0
-
-# ------------------------------------
-# Visualization
-# ------------------------------------
-matplotlib>=3.6.0
-seaborn>=0.12.0
-
-# ------------------------------------
-# Development & Notebook Support
-# ------------------------------------
-jupyter>=1.0.0
-ipykernel>=6.0.0
-
-# ------------------------------------
-# Utilities
-# ------------------------------------
-python-dateutil>=2.8.0
-tqdm>=4.64.0
+# Exact versions used for the results in this repository.
+# Python 3.10 or 3.11 is supported; CI runs both.
+numpy==1.26.4
+pandas==2.3.0
+scipy==1.15.3
+scikit-learn==1.7.2
+statsmodels==0.15.0
+matplotlib==3.10.7
+yfinance==1.7.0
+pyarrow==21.0.0
+requests==2.32.3
+lxml==6.0.2
+pytest==9.1.1

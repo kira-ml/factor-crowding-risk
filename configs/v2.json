@@ -1,0 +1,121 @@
+{
+  "start": "2005-01-01",
+  "end": "2025-12-31",
+  "max_tickers": 900,
+  "universe_size": 500,
+  "min_history_days": 252,
+  "min_price": 5.0,
+  "min_adv": 5000000.0,
+  "adv_window": 60,
+  "rebalance_freq": "W-FRI",
+  "mom_lookback": 252,
+  "mom_skip": 21,
+  "rev_window": 21,
+  "vol_window": 252,
+  "beta_window": 252,
+  "beta_terciles": 3,
+  "decile": 0.1,
+  "entry_pct": 0.92,
+  "exit_pct": 0.82,
+  "min_leg_names": 25,
+  "name_cap": 0.02,
+  "gross": 2.0,
+  "factors": [
+    "MOM",
+    "STREV",
+    "LOWVOL"
+  ],
+  "corr_window": 60,
+  "burn_in": 104,
+  "adv_ref_aum": 1000000000.0,
+  "participation": 0.1,
+  "persist_rebalances": 6,
+  "z_clip": 4.0,
+  "composite_weights": [
+    0.25,
+    0.25,
+    0.25,
+    0.25
+  ],
+  "horizons_weeks": [
+    4,
+    13
+  ],
+  "primary_horizon": 4,
+  "impact_c": 0.314,
+  "impact_c_grid": [
+    0.1,
+    0.314,
+    0.5
+  ],
+  "execution_days": 10,
+  "execution_days_grid": [
+    1,
+    5,
+    10,
+    21
+  ],
+  "premium_assumption_grid": [
+    0.01,
+    0.02,
+    0.03,
+    0.05,
+    0.075,
+    0.1
+  ],
+  "spread_bp": 3.0,
+  "spread_bp_grid": [
+    1.0,
+    3.0,
+    10.0
+  ],
+  "borrow_bp": 50.0,
+  "financing_bp": 0.0,
+  "aum_grid": [
+    10000000.0,
+    100000000.0,
+    1000000000.0,
+    5000000000.0,
+    10000000000.0
+  ],
+  "hurdle": 0.5,
+  "hurdle_grid": [
+    0.25,
+    0.5,
+    0.75
+  ],
+  "cost_hurdle_bp_grid": [
+    50.0,
+    100.0,
+    200.0
+  ],
+  "aum_bounds": [
+    1000000.0,
+    100000000000.0
+  ],
+  "quantiles": [
+    0.05,
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    0.9
+  ],
+  "primary_quantile": 0.1,
+  "bootstrap_reps": 2000,
+  "block_mean": 8,
+  "fdr_alpha": 0.1,
+  "alpha": 0.05,
+  "power": 0.8,
+  "seed": 20261116,
+  "overlay_start_pct": 0.6,
+  "overlay_end_pct": 0.9,
+  "overlay_floor": 0.3,
+  "overlay_cap": 1.0,
+  "vol_target": 0.1,
+  "vol_scale_cap": 1.5,
+  "scaling_cost_bp": 5.0,
+  "n_random_overlays": 200,
+  "figure_dpi": 160,
+  "max_dropped_frac": 0.2
+}

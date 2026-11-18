@@ -1,243 +1,403 @@
-# Problem Framing: Factor Crowding Risk and Alpha Decay Modeling
+# Problem Framing: Exit Risk and Capacity in Equity Factors
 
-*Defining the research problem before implementation.*
-
----
-
-## The Investment Problem
-
-Quantitative investment strategies rely on factors—systematic, rules-based signals like value, momentum, or low volatility—to drive portfolio construction. A consistently profitable factor is not an infinite resource. As more market participants identify and trade the same signal, the very act of deploying capital compresses the opportunity. This is **factor crowding**, and it represents a first-order risk for any systematic fund.
-
-When a factor becomes crowded:
-
-- Correlations among its top holdings rise as investors pile into the same names
-- Valuations stretch beyond fundamental justification
-- The factor becomes fragile—vulnerable to sharp, correlated drawdowns when the crowded trade unwinds
-
-The August 2007 quant crisis remains the canonical example: highly correlated long-short factor portfolios suffered simultaneous, devastating losses as multiple funds were forced to deleverage the same positions.
-
-**The core problem:** Most factor research treats signals as static, ignoring the dynamic reality that a factor's efficacy degrades as capital flows toward it. A fund that cannot measure when its edge is eroding is flying blind.
+**Version 2.0. Supersedes the V1 framing, archived at `docs/archive/v1/problem_framing.md`.**
+**Status: framing finalized. Implementation follows this document.**
 
 ---
 
-## Why This Matters
+## 1. The question, in one paragraph
 
-For a quantitative fund, measuring crowding is not an academic exercise—it is a capital allocation and risk management imperative.
+A factor strategy is a claim on future returns that must be *held*. Holding it requires
+capital, and exiting it requires liquidity. The V1 project asked whether crowding
+predicts the sign of future factor returns. That question is close to unanswerable with
+public price data and, more importantly, it is not the question a portfolio manager
+actually faces. The question a manager faces is: **how much can I hold, and how bad is
+the exit if everyone leaves at once?** V2 answers that. It measures the *liquidity-adjusted
+fragility* of equity factor portfolios, estimates their *capacity* under a market-impact
+model, and tests whether fragile factors suffer worse left tails than the volatility
+alone would predict.
 
-A reliable crowding detection framework enables a portfolio manager to:
+## 2. Why the original framing failed
 
-| Action | Impact |
-|--------|--------|
-| **Reduce position sizes** in crowded factors | Limits exposure to crowded unwind events |
-| **Tactically hedge** factor exposure | Protects returns during decay periods |
-| **Rotate capital** toward less-crowded signals | Maintains strategy capacity and Sharpe ratio |
-| **Communicate risk** to investors and risk committees | Demonstrates sophisticated risk awareness |
+Three independent problems, documented in full in `docs/audit_v1.md`.
 
-A fund that can systematically measure and act on crowding signals can protect investor capital in ways that a static factor allocation cannot.
+### 2.1 The construct was not measurable with the data
 
----
+Crowding is a latent state of *other investors' positioning*. Measuring it requires
+holdings, flows, or prime-brokerage data. V1 had daily prices and used raw pairwise
+correlation as a proxy. That proxy is dominated by market volatility: correlations rise
+for every stock when the market falls. V1 therefore measured the volatility regime and
+called it crowding. No amount of modelling fixes a proxy that is confounded with the
+most obvious alternative explanation.
 
-## Research Question
+### 2.2 The target had almost no independent variation
 
-**Primary Question:**
+Forward three-month factor returns sampled weekly overlap by twelve weeks out of
+thirteen. A four-year sample contains roughly sixteen independent three-month
+observations. V1 then classified the sign of that target and reported an F1 of 0.9483,
+which the recorded confusion matrix shows to be the class base rate. The project was
+not detecting decay; it was detecting that one factor fell in one window.
 
-Can we construct a cross-sectional crowding score for standard equity factors (Value, Momentum) that reliably predicts the future decay of that factor's information coefficient (IC)?
+### 2.3 The decision was mis-specified
 
-**Refined Hypothesis:**
+Even a correct forecast of a factor's mean return does not tell a manager what to do.
+The binding constraints in real allocation are capacity, impact, and the risk of a
+correlated exit. V1's backtest compared a de-risked portfolio with a fully invested one
+and attributed the difference to a crowding signal. It never asked whether the same
+result could be obtained by holding less, or by volatility targeting, both of which
+require no crowding measurement at all.
 
-Anomalous patterns of high pairwise correlation and concentrated institutional ownership within a factor's top-quintile stocks precede a statistically significant decline in the factor's forward-looking 1-month and 3-month rank IC.
+## 3. The reframed problem
 
-**Sub-questions:**
+### 3.1 Statement
 
-1. Which crowding proxy (correlation, ownership concentration, valuation spread, short interest, exposure concentration) contributes the most predictive signal?
-2. Is the relationship between crowding and alpha decay linear, or does it manifest primarily in extreme crowding regimes?
-3. Does a simple, rule-based position sizing adjustment informed by a crowding score improve risk-adjusted returns relative to a static factor allocation?
+> **Can the exit risk and the capital capacity of an equity factor be measured ex ante,
+> and does that measurement add information about the factor's left tail beyond
+> volatility?**
 
----
+Two measurable objects replace the single unmeasurable one:
 
-## What This Project Is (and Is Not)
+- **Fragility**: how synchronized, concentrated, slow to exit, and consensus-driven the
+  factor's active positions are. Observable from prices and volume.
+- **Capacity**: the capital at which trading costs consume a stated fraction of the
+  gross premium. A property of the strategy and the market, not of other investors'
+  intentions.
 
-### This Project Is:
+### 3.2 Why this is a better problem
 
-- A **capacity-aware risk management tool** for a hypothetical systematic manager
-- An **anomaly detection problem** framed in the cross-sectional behavior of factor portfolios
-- A **hypothesis-driven investigation** into the observable fingerprints of factor crowding
-- A demonstration of **practical ML judgment** applied to a genuine investment risk
+| Criterion | V1 framing | V2 framing |
+| :--- | :--- | :--- |
+| Construct measurable | No (latent positioning) | Yes (correlation, concentration, ADV, turnover) |
+| Target has power | No (~16 independent blocks) | Yes (~250 effective four-week blocks) |
+| Decision-relevant | Weakly (predict sign) | Directly (size, exit, capacity) |
+| Falsifiable | No clear null | Pre-specified null and minimum detectable effect |
+| Survives a null result | No | Yes: the capacity report is a deliverable either way |
+| Distinct from known effects | No (volatility timing) | Tested against volatility management explicitly |
 
-### This Project Is Not:
+The last row matters. Moreira and Muir (2017) show that scaling exposure by inverse
+realized volatility improves Sharpe ratios across many factors. Any "fragility overlay"
+that is really a volatility overlay will be exposed by a volatility-managed control.
+That control is mandatory in V2.
 
-- A claim to discover new alpha or "beat the market"
-- A causal model of institutional fund flows
-- A production-grade risk system
-- A PhD thesis on factor crowding
-- A strategy that can be deployed with real capital
+### 3.3 The payoff is asymmetric
 
----
+| Outcome | Deliverable | Value |
+| :--- | :--- | :--- |
+| Fragility predicts the left tail beyond volatility | A risk signal with an economic mechanism and honest inference | High |
+| Fragility does not predict the left tail | A tight null with a reported minimum detectable effect, plus the capacity report | Still useful |
+| Capacity is small at plausible AUM | A direct constraint on strategy scale, which is actionable | High |
 
-## Scope Boundaries
-
-| Dimension | In Scope | Out of Scope |
-|-----------|----------|--------------|
-| **Factors** | Momentum (12-1 month), Book-to-Market (Value) | Multi-factor interactions, exotic factors |
-| **Universe** | S&P 500 constituents | Small caps, international markets |
-| **Time Period** | 5 years of daily data | Multi-cycle regime analysis |
-| **Crowding Proxies** | 5 interpretable metrics | Fund flow data, prime brokerage data, options market signals |
-| **Prediction Target** | Forward 1m and 3m factor rank IC | Forward returns of individual stocks |
-| **Modeling** | Logistic regression, linear regression, Isolation Forest, LightGBM | Deep learning, reinforcement learning, causal inference |
-| **Evaluation** | Correlation, precision/recall, comparative backtest | Institutional backtesting framework with transaction costs |
-
----
-
-## Assumptions
-
-1. **Crowding leaves observable fingerprints:** Crowding is a latent phenomenon, but it manifests in measurable quantities—higher correlation, concentrated ownership, compressed valuations, and elevated short interest in the most desirable factor quintile.
-
-2. **Public data is sufficient:** While institutional investors have access to proprietary flow data, publicly available 13F filings and daily price data are sufficient to construct a meaningful, albeit lagged, crowding estimate.
-
-3. **Academic factor definitions are reasonable proxies:** The Fama-French Momentum and Book-to-Market factor definitions serve as reasonable stand-ins for the types of systematic signals used by quantitative funds in practice.
-
-4. **Factor decay has a measurable lead time:** Crowding conditions build over weeks and months, not days. The 1-month and 3-month forward IC windows are appropriate horizons for capturing the effects of alpha decay.
-
-5. **Crowding is one of several drawdown drivers:** Alpha decay from crowding is not the sole cause of factor underperformance. Macroeconomic regime shifts, volatility events, and structural market changes also contribute and are not controlled for in this analysis.
-
----
-
-## Constraints
-
-1. **Data Lag (Look-Ahead Bias):** The most significant constraint. 13F institutional ownership data is reported quarterly with a 45-day filing delay. All features derived from 13F data must be constructed with this "as-of" dating. Failure to do so would introduce look-ahead bias and invalidate any predictive claims. The project will explicitly document and enforce this lag.
-
-2. **Attribution, Not Causation:** This project cannot establish a causal link between measurable crowding proxies and subsequent alpha decay. It can only identify a robust statistical association. A true causal model would require granular fund flow data and a structural model of institutional behavior—both well beyond the scope of a 2-3 day project.
-
-3. **Limited Factor Universe:** Only two factors are analyzed to keep the feature engineering and evaluation manageable. Expanding to a full factor zoo would exceed the time budget.
-
-4. **No Macroeconomic Controls:** The model does not condition on macroeconomic regimes (expansion/recession, high/low volatility, rising/falling rates). A factor may decay due to macro headwinds rather than crowding, and this project cannot disambiguate the two.
-
-5. **Simplified Backtest:** The backtest assumes frictionless trading within the S&P 500 universe. It does not model transaction costs, market impact, or short-selling constraints. The backtest exists to demonstrate the directional utility of crowding scores, not to generate realistic strategy returns.
+The project cannot end empty. That is deliberate: the empirical claim is uncertain, and
+the engineering and measurement contribution does not depend on it.
 
 ---
 
-## Success Criteria
+## 4. Definitions
 
-The project is evaluated on whether it demonstrates a **predictive, monotonic relationship** between crowding scores and forward factor performance—not on whether it "beats the market."
+### 4.1 Notation
 
-### Quantitative Criteria
+| Symbol | Meaning |
+| :--- | :--- |
+| `t` | Weekly rebalance date, Friday close |
+| `U_t` | Point-in-time investable universe at `t` |
+| `f` | Factor, one of `MOM`, `STREV`, `LOWVOL` |
+| `s_{i,t}` | Factor signal for stock `i` at `t` |
+| `w_{i,t}` | Active portfolio weight, dollar-neutral, `Σ|w| = 1` per leg |
+| `r_{i,t+1}` | Next-period stock return |
+| `r^f_t` | Factor return, `Σ_i w_{i,t} r_{i,t+1}` |
+| `ADV_{i,t}` | Median daily dollar volume over the prior 60 trading days |
+| `A` | Sleeve notional in dollars, one side |
 
-| Criterion | Threshold | Interpretation |
-|-----------|-----------|----------------|
-| Correlation between composite crowding score and forward 3-month factor IC | Statistically significant negative correlation (p < 0.05) | The score carries predictive signal beyond noise |
-| Precision/recall of crowded regime flags vs. subsequent negative factor returns | Precision > 0.5, Recall > 0.3 | The model identifies danger zones without excessive false alarms |
-| Backtest Sharpe ratio improvement | Crowding-aware strategy Sharpe > Static strategy Sharpe by 0.1+ | The signal translates into a meaningful risk-adjusted improvement |
-| Backtest max drawdown reduction | Crowding-aware strategy max drawdown < Static strategy max drawdown | The signal successfully avoids the worst drawdown periods |
+### 4.2 Universe
 
-### Qualitative Criteria
+At each `t`, `U_t` is the 500 stocks with the largest 60-day median dollar volume among
+all candidates that have at least 252 trading days of history and a price of at least
+$5. Membership is computed only from data available at `t`.
 
-| Criterion | What Success Looks Like |
-|-----------|------------------------|
-| Interpretability | A portfolio manager can understand what drives the crowding score and why it signals danger |
-| Visualization | Clear plots showing crowding episodes and the subsequent factor performance degradation |
-| Reproducibility | The entire pipeline runs end-to-end with documented dependencies and a clean environment |
-| Honesty | Limitations, assumptions, and data constraints are clearly communicated, not buried |
+This is a *liquidity universe*, not an index. It is point-in-time with respect to
+liquidity, price, and history, which removes the index-membership look-ahead in
+V1. It is **not** point-in-time with respect to existence: the candidate pool is
+current S&P 500/400 membership, and the panel contains zero delistings. This is
+complete survivorship, disclosed and quantified in Section 8.
+
+### 4.3 Factors
+
+Three price-based factors, chosen because they have distinct economics, distinct
+turnover, and distinct liquidity profiles:
+
+| Factor | Signal | Economic content | Expected turnover |
+| :--- | :--- | :--- | :--- |
+| `MOM` | Cumulative return from `t-252` to `t-21` | Underreaction, information diffusion | Low |
+| `STREV` | Negative return from `t-21` to `t` | Liquidity provision, overreaction | Very high |
+| `LOWVOL` | Negative realized volatility over `t-252` to `t` | Leverage constraints, lottery aversion | Low |
+
+Construction: signal winsorized at the 1st and 99th percentile, ranked
+cross-sectionally, residualized on a 252-day rolling market beta in signal space,
+and converted to weights with a per-name cap of 2% of gross exposure. Long the
+top decile, short the bottom decile. Dollar-neutral and gross 2.0. The
+construction is **not** beta-neutral: signal-space residualization removes most of
+the tilt but not all of it. Realized CAPM beta and alpha are reported. See
+ADR-0005.
+
+There is no "value" factor. Value requires book equity or earnings, which this data
+source does not provide. Claiming a price-based reversal signal is value was a V1 error
+and will not be repeated.
+
+**Invariant:** the three factor return series must not be pairwise collinear. A test
+asserts `|corr| < 0.9` for every pair over the full sample. V1 would have failed this
+test with a correlation of -1.0.
+
+### 4.4 Fragility measures
+
+Four families, each with a stated mechanism and a sign prediction. All are computed
+from data at or before `t`.
+
+**F1. Residual synchronization.** Average pairwise correlation of market-residual daily
+returns within the long leg over the trailing 60 days, computed on a Ledoit-Wolf
+shrinkage correlation matrix to handle the case where the number of names approaches the
+number of days, then Fisher-z transformed.
+*Mechanism:* correlated residual risk means holders share the same non-market exposure;
+an unwind is common-mode.
+*Prediction:* higher synchronization, worse left tail.
+
+**F2. Effective breadth.** `N_eff = (Σ|w|)² / Σw²` on the active weights, reported both
+unweighted and liquidity-weighted (`w_i` divided by `ADV_i` before normalization).
+*Mechanism:* few independent bets means idiosyncratic shocks do not diversify.
+*Prediction:* lower breadth, worse left tail.
+
+**F3. Exit horizon.** Dollar-weighted days to liquidate the long leg at a 10%
+participation rate for a reference sleeve size `A`:
+`D_t = Σ_i |w_i| · A / (0.10 · ADV_{i,t})`.
+*Mechanism:* the direct cost of a crowded exit; the quantity that binds capacity.
+*Prediction:* longer exit horizon, worse left tail.
+
+**F4. Consensus persistence.** Fraction of long-leg weight held in names that have been
+in the long leg for six or more consecutive rebalances, with signal dispersion as a
+robustness variant.
+*Mechanism:* stale positioning means the marginal holder has not re-underwritten the
+trade; nobody has left.
+*Prediction:* higher persistence, worse left tail, with the caveat that slow factors
+mechanically score higher.
+
+Each measure is standardized with an **expanding** window, minimum 104 weeks, and
+combined into a single composite by equal weight. The composite is the primary
+independent variable; the four measures are secondary and subject to FDR control.
+
+### 4.5 Capacity
+
+Per-name temporary impact follows the square-root form used in practice
+(Almgren et al., 2005; Frazzini, Israel and Moskowitz, 2018):
+
+```
+cost_i(A) = 0.5 · spread_i + c · σ_i · sqrt( Q_i(A) / ADV_i )
+Q_i(A)    = |w_i| · A
+```
+
+with `c = 0.314` as the baseline, `spread_i = 5bp` for large caps, and sensitivity runs
+at `c ∈ {0.1, 0.5}` and `spread ∈ {2bp, 15bp}`. Round-trip cost per rebalance is
+`C(A) = Σ_i |Δw_i| · cost_i(A)`, and the net annualized premium is
+`Π_net(A) = Π_gross − 52 · E[C(A)]`.
+
+**Capacity** at hurdle `h` is the largest `A` with `Π_net(A) ≥ h · Π_gross`. Primary
+`h = 0.5`; also reported at 0.25 and 0.75.
+
+This is a model, not a measurement. Its inputs are estimated and its coefficient is
+calibrated from published work. The deliverable is a curve with a sensitivity band, not
+a point estimate. Section 8 states this as a limitation, and the report presents the band
+alongside the headline.
+
+### 4.6 Estimands
+
+| ID | Estimand | Role |
+| :--- | :--- | :--- |
+| E1 | Quantile regression coefficient `β_τ` of the forward 4-week factor return on the standardized composite fragility, `τ = 0.10`, pooled across factors with factor fixed effects, controlling for volatility | **Primary** |
+| E2 | Difference in expected shortfall, `ES_5%(high fragility) − ES_5%(low fragility)` | Secondary |
+| E3 | Net-of-cost tail metrics of a fragility overlay versus a volatility-matched control at equal average exposure | Secondary, decision layer |
+| E4 | Capacity curve and capacity at 50% premium retention, per factor | Descriptive |
+
+`β_0.50` is estimated alongside `β_0.10`. The claim is *tail-specific*: fragility should
+move the left tail without simply shifting the mean. If `β_0.10 ≈ β_0.50`, the measure is
+a repackaged volatility or drift signal and will be reported as such.
 
 ---
 
-## Modeling Philosophy: Staged Approach
+## 5. Hypotheses and decision rules
 
-The modeling strategy is deliberately staged. Complexity is earned, not assumed.
+Pre-specified before the final run. The study is **exploratory**, not
+confirmatory: the construction was revised after inspecting results (ADR-0005,
+ADR-0007), and there is no holdout. These are the rules that decide what the
+project concludes.
 
-### Stage 1: Baseline (Must Complete)
+### H1. Fragility is associated with a worse left tail
 
-Establish a simple, interpretable benchmark that any quant can understand and critique.
+`β_0.10 < 0` in E1, with a stationary-bootstrap 95% interval excluding zero.
+The composite is a single pre-specified test. The four individual measures are
+secondary and are reported with Benjamini-Hochberg FDR-adjusted p-values.
 
-**Baseline 1: Composite Z-Score + Logistic Regression**
-- Average the five normalized crowding proxies into a single Z-score
-- Logistic regression predicting binary direction of forward 3-month factor return
-- Fully transparent, no hyperparameters, no black box
+**Pass:** the composite satisfies the sign and interval rule. Individual
+measures may be weaker; they are labelled secondary.
 
-**Baseline 2: Single-Feature Linear Decay Model**
-- Univariate linear regression: pairwise correlation → forward factor IC
-- Tests the most intuitive crowding mechanism in isolation
-- Sets a minimum predictive bar for more complex models
+### H2. The effect is not volatility
 
-### Stage 2: Advanced (Conditional on Baseline)
+The coefficient in H1 must survive controls for 20-day EWMA realized factor
+volatility, realized market volatility, trailing 12-week factor return, and a
+liquidity-regime variable (median ADV growth).
 
-Only pursued if baseline results indicate a meaningful but potentially non-linear or threshold-based signal.
+**Pass:** `β_0.10` retains its sign and at least half its magnitude with the full
+control set. If it does not, the finding is "fragility proxies volatility",
+which is a real result and will be stated as one.
 
-**Advanced 1: Isolation Forest for Regime Identification**
-- Unsupervised anomaly detection on the five-dimensional feature space
-- Segments time into "crowded" and "normal" regimes
-- Tests the hypothesis that crowding matters most in extremes
+### H3. The overlay improves tail outcomes
 
-**Advanced 2: LightGBM for Non-Linear Decay Prediction**
-- Gradient boosting regression predicting continuous forward IC
-- Captures interaction effects (e.g., high correlation + extreme valuations)
-- Feature importance analysis maintains interpretability
+The fragility overlay must beat a volatility-managed portfolio with the *same
+average exposure* and the same overlay cost and borrow assumptions, on `ES_5%`
+and maximum drawdown, over the test period, with a block-bootstrap interval on
+the difference. The comparison is gross of the underlying factor's rebalancing
+cost; capacity reports that separately.
 
-### What Is Not Attempted
+**Pass:** both tail metrics improve and at least one improvement is significant
+at 5%. Losing to the volatility-matched control is a substantive finding:
+crowding adds nothing beyond volatility management.
 
-- Deep learning (unjustified for tabular data with <10 features and limited samples)
-- Survival analysis (adds statistical complexity without clear benefit over regime analysis for a 2-3 day project)
-- Real-time streaming or production deployment (MLOps, out of scope)
+### H4. Capacity orders the factors by turnover (descriptive)
 
----
+At a fixed 100bp annual trading-cost-drag hurdle, `STREV` has lower capacity than
+`MOM`, which has lower capacity than `LOWVOL`. This is a **deterministic identity
+of the cost model**, not a hypothesis test. It is reported as a descriptive
+decomposition. The substantive result is the level and its sensitivity to the
+execution horizon, impact coefficient, spread, and assumed premium.
 
-## Feature Engineering Rationale
+### Falsification conditions
 
-Each feature is chosen because it proxies for a specific, intuitive crowding mechanism. No feature is included "because we can compute it."
+The thesis is rejected, and the report says so, if any of the following holds:
 
-| Feature | Crowding Mechanism | Observable Consequence |
-|---------|-------------------|----------------------|
-| Pairwise Correlation | Herding: investors buy the same factor-relevant stocks | Returns of top-decile stocks converge |
-| HHI of Factor Exposure | Concentration: factor bets become less diversified | Fewer stocks drive factor returns |
-| Valuation Spread | Overvaluation: factor becomes "priced for perfection" | Spread between cheap and expensive quintiles compresses |
-| Institutional Ownership HHI | Ownership Saturation: few funds dominate positions | Concentration of 13F holders in top decile rises |
-| Short Interest | Fragility: crowded longs attract short sellers or hedging activity | Short interest as % of float rises in top decile |
-
----
-
-## Evaluation Philosophy
-
-This project prioritizes **economic utility over statistical abstraction.**
-
-- A statistically significant correlation that doesn't improve the backtest is a failure.
-- A backtest improvement driven by a black-box model that no PM would trust is a failure.
-- A transparent, interpretable model that directionally improves risk management is a success.
-
-The backtest is the ultimate arbiter—not because we claim the strategy is investable, but because it translates the crowding signal into the language of portfolio management: Sharpe ratios, drawdowns, and capital allocation decisions.
+1. The V1 reproduction shows that the constant predictor does **not** reproduce F1
+   0.9483. Then the audit is wrong and must be revised before V2 continues.
+2. E1 gives `β_0.10 ≥ 0`, or an interval that excludes any economically meaningful
+   effect, with adequate power.
+3. H2 fails: the effect vanishes under volatility controls.
+4. H3 fails against the volatility-matched control.
+5. The capacity curve is flat over $10M to $10B, implying impact is not binding at
+   plausible scale and the capacity contribution is academic.
 
 ---
 
-## Why This Framing Signals Strong Data Science Ability
+## 6. Identification and confounders
 
-| Signal | How This Project Demonstrates It |
-|--------|----------------------------------|
-| **Problem formulation** | The problem is defined in financial terms before any code is written |
-| **ML judgment** | Models are staged from simple to complex based on evidence, not assumed complexity |
-| **Feature engineering** | Every feature has a theoretical justification rooted in market microstructure intuition |
-| **Experimental design** | Data lags, look-ahead bias, and evaluation metrics are explicitly addressed |
-| **Financial intuition** | The project addresses capacity, implementation costs, and signal decay—topics absent from toy projects |
-| **Scientific thinking** | Clear assumptions, honest limitations, and hypothesis-driven analysis |
-| **Communication** | The problem framing document itself demonstrates the ability to scope and communicate complex work |
-| **Humility** | The project does not claim to beat the market, generate alpha, or solve an institutional problem |
+This is an observational study of a time series. Nothing here identifies a causal
+effect of crowding on returns, and the report will not claim one.
 
----
+| Confounder | Why it matters | Control |
+| :--- | :--- | :--- |
+| Market volatility | Raises correlation and worsens tails simultaneously | Residual correlations; EWMA vol controls; volatility-matched overlay |
+| Liquidity regime | Illiquidity raises impact and crashes together | Exit horizon is liquidity-adjusted; median ADV control |
+| Factor momentum | Recent returns predict both fragility and next returns | Trailing 12-week factor return control |
+| Publication and decay trend | Factor premia decay over calendar time (McLean and Pontiff, 2016) | Subsample stability: pre-2010 vs post-2010 |
+| Selection of the universe | Liquid names are the survivors | Point-in-time rule; survivorship bias quantified |
+| Overlapping targets | Inflates effective sample size | Block bootstrap; non-overlapping subsample check |
 
-## Estimated Implementation Plan
-
-| Day | Focus | Key Deliverables |
-|-----|-------|-----------------|
-| **Day 1** | Data acquisition, cleaning, feature engineering | Five crowding proxies constructed with 13F lag applied; factor ICs computed |
-| **Day 2** | Baseline models | Z-score logistic regression; single-feature linear model; evaluation metrics |
-| **Day 3** | Advanced models (if warranted) + backtest + visualizations | Isolation Forest regime analysis; LightGBM model; comparative backtest plots |
+The estimand is associational. A causal claim would require holdings and flow data, which
+are out of scope.
 
 ---
 
-## References
+## 7. Evaluation philosophy
 
-- Khandani, A. E., & Lo, A. W. (2007). What happened to the quants in August 2007?
-- Arnott, R., Kalesnik, V., & Wu, L. (2019). The incredible shrinking factor return.
-- Cahan, R., & Luo, Y. (2013). Standing out from the crowd: Measuring crowding in quantitative strategies.
-- Fama, E. F., & French, K. R. (1993). Common risk factors in the returns on stocks and bonds.
+Four commitments.
+
+1. **A null result with a tight bound is a success.** The report states the minimum
+   detectable effect in economic units. "No detectable tail signal above 80bp per four
+   weeks" is a useful finding.
+2. **The benchmark is the argument.** Every overlay is compared with a static portfolio,
+   a volatility-managed portfolio, and a randomized overlay with the same exposure path
+   distribution. Beating only the static portfolio proves nothing.
+3. **The primary test is pre-specified and singular.** Secondary results are labelled
+   exploratory and FDR-adjusted. There is no best-of reporting.
+4. **Every number is reproducible from a manifest.** Seeds, config hash, data snapshot
+   date, and package versions are recorded with each run.
+
+### Power
+
+Weekly data from 2005 to 2025 gives roughly 1,090 observations. Four-week forward
+returns give about 270 effective independent blocks. The standard error of a quantile
+regression coefficient at `τ = 0.10` is roughly 1.5 to 2 times the least-squares standard
+error. With a factor return standard deviation of 3% to 5% over four weeks, the minimum
+detectable effect is on the order of **0.6% to 1.1% of four-week return per one standard
+deviation of fragility**, at 5% significance and 80% power.
+
+That is the honest resolution of this design. Smaller effects exist and cannot be
+detected here. The report computes the exact figure from the realized series and states
+it next to every null.
+
+Tail-specific tests at `τ = 0.05` have roughly five effective tail episodes across 20
+years and are reported as exploratory only. This is stated in advance so that no reader
+mistakes a `τ = 0.05` p-value for a reliable result.
 
 ---
 
-*This document defines the problem and scopes the approach before implementation begins. It is a living document—assumptions and scope may be refined as data exploration reveals unforeseen challenges or opportunities.*
+## 8. Limitations, stated before the results
+
+1. **Survivorship.** `yfinance` does not reliably serve delisted tickers. The sample
+   is survivor-only: the panel contains zero delistings. Factor premium estimates
+   are biased upward, and capacity estimates are biased upward because failed and
+   shrinking firms are missing. This is complete survivorship, not a residual bias.
+2. **No holdings or flow data.** Fragility measures are proxies. They measure the
+   *portfolio* the factor implies, not the portfolios other managers actually hold.
+   Position overlap between real funds is unobservable here.
+3. **Impact model uncertainty.** The square-root law is an empirical regularity, not a
+   law. The coefficient varies by market, period, and order type. Capacity is reported
+   with a sensitivity band for this reason.
+4. **Three factors.** Conclusions do not generalize to the factor zoo. They are statements
+   about momentum, short-term reversal, and low volatility in large US equities.
+5. **One market.** US only. Capacity in other markets will differ with liquidity.
+6. **Monthly rebalancing.** Daily or weekly rebalancing would raise costs and lower
+   capacity; the monthly choice is disclosed and applied consistently to the
+   return series and the capacity turnover.
+7. **Model-free fragility is not achievable.** The composite weighting is a judgment.
+   Equal weights are used to avoid fitting, and the sensitivity to weighting is reported.
+8. **No causal identification.** Associations only.
+
+---
+
+## 9. Scope
+
+| Dimension | In scope | Out of scope |
+| :--- | :--- | :--- |
+| Factors | MOM, STREV, LOWVOL | Value, quality, carry, multi-factor blends |
+| Universe | Top 500 US stocks by dollar volume, point-in-time | Small caps, international, ETFs |
+| Period | 2005-2025, weekly | Intraday, pre-2000 |
+| Fragility | 4 price/volume measures | 13F holdings, prime brokerage, options positioning |
+| Capacity | Square-root impact, sensitivity band | Full market-impact simulation, order-book data |
+| Inference | Quantile regression, block bootstrap, FDR | Structural VAR, causal identification |
+| Decision layer | Sizing overlay with matched controls and costs | Live trading, execution algorithms |
+| Output | Capacity table, fragility index, report, tested package | Production risk system |
+
+## 10. Non-claims
+
+This project does not claim to predict factor returns, generate alpha, beat a benchmark,
+measure other investors' positions, or provide investment advice. It measures two
+properties of a strategy, exit risk and capacity, and reports what the data support. The
+capacity numbers are model estimates with a stated sensitivity band. The fragility index
+is a proxy with a stated failure mode. Where the evidence is weak, the report says so.
+
+---
+
+## 11. References
+
+- Almgren, R., Thum, C., Hauptmann, E., and Li, H. (2005). Direct estimation of equity market impact. *Risk*.
+- Arnott, R., Kalesnik, V., and Wu, L. (2019). The incredible shrinking factor return. *Financial Analysts Journal*.
+- Barroso, P., and Santa-Clara, P. (2015). Momentum has its moments. *Journal of Financial Economics*.
+- Brunnermeier, M., and Pedersen, L. (2009). Market liquidity and funding liquidity. *Review of Financial Studies*.
+- Cahan, R., and Luo, Y. (2013). Standing out from the crowd: Measuring crowding in quantitative strategies. *Journal of Portfolio Management*.
+- Daniel, K., and Moskowitz, T. (2016). Momentum crashes. *Journal of Financial Economics*.
+- Frazzini, A., Israel, R., and Moskowitz, T. (2018). Trading costs. Working paper.
+- Khandani, A., and Lo, A. (2007). What happened to the quants in August 2007? *Journal of Financial Markets*.
+- Ledoit, O., and Wolf, M. (2004). A well-conditioned estimator for large-dimensional covariance matrices. *Journal of Multivariate Analysis*.
+- McLean, R., and Pontiff, J. (2016). Does academic research destroy stock return predictability? *Journal of Finance*.
+- Moreira, A., and Muir, T. (2017). Volatility-managed portfolios. *Journal of Finance*.
+- Novy-Marx, R., and Velikov, M. (2016). A taxonomy of anomalies and their trading costs. *Review of Financial Studies*.
+- Politis, D., and Romano, J. (1994). The stationary bootstrap. *Journal of the American Statistical Association*.
+
+---
+
+*This document is the contract for V2. Changes require an entry in `DECISIONS.md`.*

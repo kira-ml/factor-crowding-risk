@@ -1,10 +1,6 @@
 # ============================================================
 # factor-crowding-risk
-# Measuring the Crowd: Detecting Factor Capacity Risk
-# and Modeling Alpha Decay in U.S. Equities
-# ============================================================
-# Author: Ken Ira Lacson
-# GitHub: https://github.com/kira-ml
+# Crowded Exits: exit risk and capacity in equity factors
 # ============================================================
 
 # ------------------------------------
@@ -21,7 +17,7 @@ build/
 *.whl
 
 # ------------------------------------
-# Virtual Environment
+# Virtual environments
 # ------------------------------------
 venv/
 env/
@@ -31,35 +27,38 @@ env.bak/
 venv.bak/
 
 # ------------------------------------
-# Jupyter Notebooks
-# ------------------------------------
-.ipynb_checkpoints/
-*.ipynb_checkpoints*
-
-# ------------------------------------
-# Data Files (downloaded datasets)
+# Data and generated results
+# Raw downloads, cached panels, and run outputs are reproducible
+# from the manifest and are never committed.
 # ------------------------------------
 data/
-*.csv
+outputs/
 *.parquet
 *.feather
 *.h5
 *.hdf5
-!data/.gitkeep
+*.pkl
+yfinance_cache/
 
-
-
-
-# Keep outputs/ ignored, but track docs/ for final deliverables
-docs/
-!docs/
-docs/*
-!docs/*.pdf
-!docs/*.png
-!docs/*.jpg
+# Generated CSVs are outputs, not sources. Result tables that
+# belong in the report are generated as Markdown.
+*.csv
+!docs/**/*.csv
 
 # ------------------------------------
-# IDE and Editor Files
+# Documentation
+# docs/ is tracked by default: Markdown, figures, and the report
+# are deliverables, not build artifacts.
+# ------------------------------------
+
+# ------------------------------------
+# Notebooks
+# ------------------------------------
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# ------------------------------------
+# IDE and editors
 # ------------------------------------
 .vscode/
 .idea/
@@ -68,9 +67,10 @@ docs/*
 *~
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # ------------------------------------
-# Environment and Secrets
+# Environment and secrets
 # ------------------------------------
 .env
 .env.local
@@ -78,25 +78,6 @@ Thumbs.db
 *.env
 
 # ------------------------------------
-# Jupyter Notebook Outputs (optional - keeps notebooks clean)
+# Serena (local tooling state)
 # ------------------------------------
-# Uncomment if you want to strip notebook outputs before committing
-# *.ipynb metadata filters should be used instead for selective cleaning
-
-# ------------------------------------
-# OS Files
-# ------------------------------------
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-desktop.ini
-
-# ------------------------------------
-# Project-Specific
-# ------------------------------------
-# Cached yfinance downloads
-yfinance_cache/
+.serena/
