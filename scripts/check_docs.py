@@ -39,9 +39,9 @@ def main() -> int:
     checks: list[str] = []
 
     primary = pd.read_csv(TABLE_DIR / "primary.csv")
-    row = primary[
-        (primary["term"] == "composite") & (np.isclose(primary["quantile"], 0.10))
-    ].iloc[0]
+    row = primary[(primary["term"] == "composite") & (np.isclose(primary["quantile"], 0.10))].iloc[
+        0
+    ]
     checks.extend(
         [
             f"{row['estimate'] * 100:.2f}%",
@@ -61,9 +61,30 @@ def main() -> int:
         checks.append(money(float(capacity.loc[factor, "cost_100bp"])))
 
     overlay = pd.read_csv(TABLE_DIR / "overlay_tests.csv")
-    es = overlay[overlay["metric"] == "es_5"]
+    es = overlay[overlay["metric"] == "es_5"].set_index("factor")
     for value in es["difference"]:
         checks.append(f"{value * 100:.2f}%")
+
+    # The overlay values also need to appear in the README's decision table,
+    # where the same formatted string may occur elsewhere in prose.
+    lines = text.splitlines()
+    header = next((i for i, line in enumerate(lines) if "Fragility ES5" in line), None)
+    if header is not None:
+        table = {}
+        for line in lines[header + 2 :]:
+            if not line.startswith("|"):
+                break
+            cells = [cell.strip() for cell in line.strip("|").split("|")]
+            if len(cells) >= 4:
+                table[cells[0]] = cells[3].replace("*", "")
+        for factor, row in es.iterrows():
+            expected = f"{row['difference'] * 100:.2f}%"
+            if table.get(factor) != expected:
+                print(
+                    f"README decision table mismatch for {factor}: "
+                    f"expected {expected}, found {table.get(factor)}"
+                )
+                return 1
 
     missing = [value for value in checks if value not in text]
     if missing:

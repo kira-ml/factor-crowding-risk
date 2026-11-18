@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crowded Exits — Research Brief</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    width: 210mm; height: 297mm;
+    background: #F7F4EE;
+    color: #1B2A3A;
+    font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 8.1pt;
+    line-height: 1.4;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page { width: 210mm; height: 297mm; position: relative; overflow: hidden; }
+  .serif { font-family: Georgia, "Times New Roman", serif; }
+  .navy { color: #0E2238; }
+  .brass { color: #A9854F; }
+  .slate { color: #425466; }
+  .muted { color: #6F7F8F; }
+
+  /* ---------- header ---------- */
+  .header {
+    background: #0E2238; color: #F7F4EE;
+    padding: 9.5mm 12mm 8mm 12mm; position: relative;
+  }
+  .topline { display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 6.6pt; letter-spacing: 1.55px; text-transform: uppercase; color: #C9B28A; }
+  .topline .right { color: #9FB0BF; letter-spacing: 1.1px; }
+  h1 {
+    font-family: Georgia, "Times New Roman", serif; font-weight: normal;
+    font-size: 38pt; line-height: 0.98; letter-spacing: -0.65px;
+    margin: 3.0mm 0 1.5mm 0; color: #FBF8F1;
+  }
+  .subtitle {
+    font-family: Georgia, "Times New Roman", serif; font-style: italic;
+    font-size: 12.6pt; color: #D8C39E; margin: 0 0 2.4mm 0;
+  }
+  .dek { font-size: 8.0pt; color: #DCE4EA; max-width: 154mm; line-height: 1.42; }
+  .stamp {
+    position: absolute; right: 12mm; bottom: 8mm; text-align: right;
+    font-size: 6.5pt; color: #9FB0BF; letter-spacing: 0.65px; line-height: 1.55;
+  }
+  .stamp strong { color: #D8C39E; font-weight: 600; letter-spacing: 1.0px; }
+
+  /* ---------- method strip ---------- */
+  .method {
+    background: #EFE9DE; border-bottom: 0.25mm solid #D8CFC0;
+    padding: 4.8mm 12mm 4.9mm 12mm;
+  }
+  .method .grid { display: flex; align-items: stretch; }
+  .method .cell { flex: 1 1 0; padding: 0 4.0mm; border-right: 0.2mm solid #D6CCBC; text-align: left; }
+  .method .cell:first-child { padding-left: 0; }
+  .method .cell:last-child { border-right: none; padding-right: 0; }
+  .method .num { font-family: Georgia, serif; font-size: 7.0pt; color: #A9854F; letter-spacing: 1.1px; margin-bottom: 1.0mm; }
+  .method .label { font-size: 6.9pt; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #0E2238; margin-bottom: 1.1mm; }
+  .method .copy { font-size: 7.2pt; color: #425466; line-height: 1.36; }
+
+  /* ---------- body ---------- */
+  .body { padding: 5.6mm 12mm 0 12mm; }
+  .columns { display: flex; gap: 7.2mm; align-items: flex-start; }
+  .main { flex: 0 0 64%; min-width: 0; }
+  .side { flex: 1 1 0; min-width: 0; border-left: 0.2mm solid #D8CFC0; padding-left: 6.4mm; }
+
+  .section-label {
+    font-size: 6.7pt; font-weight: 700; letter-spacing: 1.45px;
+    text-transform: uppercase; color: #A9854F; margin: 0 0 2.0mm 0;
+  }
+  .section-label .line { display: inline-block; width: 8mm; height: 0.25mm; background: #A9854F; vertical-align: middle; margin-left: 2mm; opacity: 0.65; }
+
+  .question { font-family: Georgia, "Times New Roman", serif; font-size: 10.9pt; line-height: 1.38; color: #0E2238; margin: 0 0 2.0mm 0; }
+  .question em { color: #7A2E2E; font-style: italic; }
+  .lede { font-size: 7.85pt; color: #425466; margin: 0 0 3.8mm 0; line-height: 1.4; }
+
+  .finding { display: flex; gap: 3.0mm; margin-bottom: 2.7mm; }
+  .finding .n { flex: 0 0 6.4mm; font-family: Georgia, serif; font-size: 12pt; color: #A9854F; line-height: 1; padding-top: 0.3mm; }
+  .finding .text { flex: 1 1 auto; min-width: 0; }
+  .finding .head { font-family: Georgia, "Times New Roman", serif; font-size: 9.1pt; line-height: 1.22; color: #0E2238; margin-bottom: 0.75mm; }
+  .finding .copy { font-size: 7.55pt; color: #425466; line-height: 1.38; }
+  .finding .copy b { color: #0E2238; font-weight: 600; }
+  .finding .copy .neg { color: #7A2E2E; font-weight: 600; }
+
+  .metrics { display: flex; flex-wrap: nowrap; border-top: 0.25mm solid #D8CFC0; margin-top: 3.8mm; padding-top: 2.8mm; }
+  .metric { flex: 0 0 33.333%; width: 33.333%; padding: 0 3.2mm 2.4mm 0; }
+  .metric + .metric { padding-left: 3.2mm; border-left: 0.2mm solid #E4DDD1; }
+  .metric:last-child { padding-right: 0; }
+  .metric .k { font-size: 6.3pt; letter-spacing: 1.0px; text-transform: uppercase; color: #6F7F8F; margin-bottom: 0.7mm; }
+  .metric .v { font-family: Georgia, serif; font-size: 11.2pt; color: #0E2238; line-height: 1.1; }
+  .metric .v small { font-family: "Segoe UI", sans-serif; font-size: 7.0pt; color: #6F7F8F; }
+  .metric.overlay .v { font-size: 9.7pt; letter-spacing: -0.05px; }
+  .metric .n { font-size: 6.8pt; color: #6F7F8F; margin-top: 0.6mm; line-height: 1.3; }
+
+  .horizon { margin-top: 1.2mm; border-top: 0.25mm solid #D8CFC0; padding-top: 2.4mm; }
+  .horizon table { width: 100%; border-collapse: collapse; }
+  .horizon th { text-align: right; font-size: 6.2pt; letter-spacing: 0.8px; text-transform: uppercase; color: #6F7F8F; font-weight: 600; padding: 0 0 1.0mm 0; border-bottom: 0.2mm solid #D8CFC0; }
+  .horizon th:first-child { text-align: left; }
+  .horizon td { text-align: right; font-size: 7.2pt; color: #425466; padding: 0.85mm 0; border-bottom: 0.18mm solid #E4DDD1; }
+  .horizon td:first-child { text-align: left; font-weight: 600; color: #0E2238; }
+  .horizon .note { font-size: 6.4pt; color: #6F7F8F; margin-top: 1.1mm; }
+
+  .chart { margin-top: 2.0mm; }
+  .chart img { width: 100%; display: block; margin: 0; }
+  .chart .caption { font-size: 6.3pt; color: #6F7F8F; margin-top: 0.9mm; line-height: 1.32; }
+  .chart .quote-line { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 8.8pt; color: #0E2238; margin-top: 1.6mm; }
+
+  .side .block { margin-bottom: 4.0mm; }
+  .side .block:last-child { margin-bottom: 0; }
+  .side h3 { font-family: Georgia, "Times New Roman", serif; font-size: 10.0pt; font-weight: normal; color: #0E2238; margin: 0 0 1.4mm 0; }
+  .side p { font-size: 7.25pt; color: #425466; margin: 0 0 1.5mm 0; line-height: 1.38; }
+  .side ul { margin: 0; padding: 0; list-style: none; }
+  .side li { font-size: 7.15pt; color: #425466; line-height: 1.34; padding-left: 3.0mm; position: relative; margin-bottom: 1.05mm; }
+  .side li:before { content: ""; position: absolute; left: 0; top: 1.25mm; width: 1.2mm; height: 1.2mm; background: #A9854F; }
+  .side .quote { border-top: 0.25mm solid #D8CFC0; border-bottom: 0.25mm solid #D8CFC0; padding: 2.6mm 0 2.4mm 0; margin: 0.6mm 0 4.0mm 0; }
+  .side .quote .q { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 10.8pt; line-height: 1.3; color: #0E2238; }
+  .side .quote .a { font-size: 6.6pt; color: #6F7F8F; margin-top: 1.2mm; line-height: 1.32; }
+  .side .small { font-size: 6.9pt; color: #6F7F8F; line-height: 1.36; }
+  .side .small b { color: #425466; font-weight: 600; }
+
+  /* ---------- footer ---------- */
+  .footer {
+    position: absolute; left: 12mm; right: 12mm; bottom: 6.6mm;
+    border-top: 0.25mm solid #D8CFC0; padding-top: 2.3mm;
+    font-size: 6.7pt; color: #6F7F8F; line-height: 1.4;
+  }
+  .footer .table { display: flex; justify-content: space-between; align-items: baseline; }
+  .footer .left { text-align: left; }
+  .footer .right { text-align: right; }
+  .footer a { color: #0E2238; text-decoration: none; font-weight: 600; }
+  .footer .brass { color: #A9854F; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ================= HEADER ================= -->
+  <header class="header">
+    <div class="topline">
+      <div>Open-source research &nbsp;·&nbsp; Quantitative finance</div>
+      <div class="right">Research brief &nbsp;·&nbsp; 2026</div>
+    </div>
+    <h1>Crowded Exits</h1>
+    <div class="subtitle">Exit risk and capital capacity in equity factors</div>
+    <div class="dek">
+      A leakage-audited study of US momentum, short-term reversal, and low volatility,
+      2005–2025. The project measures the fragility of the portfolio a factor implies,
+      estimates the capital at which implementation costs become material, and tests
+      whether fragility adds left-tail information beyond volatility.
+    </div>
+    <div class="stamp">
+      <strong>v2.1.0</strong><br>
+      MIT License<br>
+      github.com/kira-ml/factor-crowding-risk
+    </div>
+  </header>
+
+  <!-- ================= METHOD STRIP ================= -->
+  <section class="method">
+    <div class="grid">
+      <div class="cell">
+        <div class="num">01</div>
+        <div class="label">Universe</div>
+        <div class="copy">Top 500 US stocks by 60-day median dollar volume from a current index candidate pool; $5 floor; 252-day history; weekly point-in-time selection. Survivor-only sample disclosed.</div>
+      </div>
+      <div class="cell">
+        <div class="num">02</div>
+        <div class="label">Factors</div>
+        <div class="copy">MOM 12–1, STREV 1-month reversal, LOWVOL 252-day volatility. Dollar-neutral deciles, 2% name cap, monthly buy-and-hold with 8%/18% bands.</div>
+      </div>
+      <div class="cell">
+        <div class="num">03</div>
+        <div class="label">Fragility</div>
+        <div class="copy">Residual synchronization (Ledoit–Wolf), liquidity-weighted breadth, exit horizon at 10% participation, long-leg persistence. Expanding z-scores; 104-week burn-in.</div>
+      </div>
+      <div class="cell">
+        <div class="num">04</div>
+        <div class="label">Inference</div>
+        <div class="copy">Quantile regression at τ = 0.10 with factor fixed effects and lagged controls; stationary bootstrap (2,000 reps, duplicates retained); centered p-values; BH; MDE.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BODY ================= -->
+  <main class="body">
+    <div class="columns">
+
+      <!-- ---------- MAIN ---------- -->
+      <div class="main">
+        <div class="section-label">The question <span class="line"></span></div>
+        <div class="question serif">
+          Can a price-based fragility measure add information about a factor’s
+          <em>left tail</em> beyond volatility — and at what size does implementation
+          cost dominate the premium?
+        </div>
+        <p class="lede">
+          Crowding is a latent property of other investors’ positions; it cannot be
+          observed directly in prices. Two constructs can be measured: the fragility of
+          the portfolio the factor implies, and the capital at which trading costs become
+          material. The empirical test is deliberately adversarial: any fragility overlay
+          must beat a volatility-managed portfolio at the same average exposure.
+        </p>
+
+        <div class="section-label">What the evidence shows <span class="line"></span></div>
+        <div class="findings">
+
+          <div class="finding">
+            <div class="n">1</div>
+            <div class="text">
+              <div class="head">The predecessor’s headline was the class base rate.</div>
+              <div class="copy">
+                A prior version reported an F1 of <b>0.9483</b>. Its “value” and
+                “momentum” factors were the same portfolio up to sign, and the score
+                equalled a constant predictor at a <b>90.2%</b> base rate. The audit is
+                included as a reproducible case study in metric and leakage failure.
+              </div>
+            </div>
+          </div>
+
+          <div class="finding">
+            <div class="n">2</div>
+            <div class="text">
+              <div class="head">Fragility does not add a detectable level effect beyond volatility.</div>
+              <div class="copy">
+                Primary coefficient: <b>−0.98% per SD</b> (95% CI −2.19% to +0.27%);
+                MDE <b>1.69%</b>. Uncontrolled: −2.38%; with full controls: −0.98%.
+                H2 retention is <b>0.41</b>, below the stated 0.50 threshold. The
+                composite is about 40% correlated with realized volatility.
+              </div>
+            </div>
+          </div>
+
+          <div class="finding">
+            <div class="n">3</div>
+            <div class="text">
+              <div class="head">The fragility overlay loses to volatility management.</div>
+              <div class="copy">
+                True 5% expected-shortfall differences of
+                <span class="neg">−1.20, −0.98, and −0.62 pp/week</span> for MOM,
+                STREV, and LOWVOL; every bootstrap interval excludes zero. The overlay
+                still beats <b>86–98%</b> of random exposure paths, so the signal is not
+                pure noise — it is weaker than volatility targeting.
+              </div>
+            </div>
+          </div>
+
+          <div class="finding">
+            <div class="n">4</div>
+            <div class="text">
+              <div class="head">Capacity is a surface, not a point estimate.</div>
+              <div class="copy">
+                At a 100bp annual cost-drag hurdle and a 10-day horizon:
+                <b>LOWVOL $2.07B</b>, <b>MOM $395M</b>, <b>STREV $7M</b>. MOM ranges
+                from <b>$39M</b> at 1 day to <b>$829M</b> at 21 days. The ordering is a
+                turnover identity; the level is the interpretable quantity.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="chart capacity">
+          <div class="section-label" style="margin-bottom:1.2mm;">Capacity surface · cost-drag AUM at 100bp <span class="line"></span></div>
+          <img src="chart_capacity.png" alt="Cost-drag capacity across execution horizons for LOWVOL, MOM, and STREV">
+          <div class="caption">Baseline: 10-day execution horizon, c = 0.314, 3bp spread. The level moves roughly 21x from 1 to 21 days; the ordering follows turnover by construction.</div>
+        </div>
+      </div>
+
+      <!-- ---------- SIDEBAR ---------- -->
+      <aside class="side">
+        <div class="block">
+          <div class="section-label">Why it matters <span class="line"></span></div>
+          <ul>
+            <li><b>A credible negative result.</b> A plausible crowding proxy is tested against the right benchmark and does not clear it.</li>
+            <li><b>A reusable capacity surface.</b> The impact model, drift convention, and sensitivity grid are portable to other strategies and data.</li>
+            <li><b>A benchmark for future work.</b> Any crowding overlay should beat volatility management before it is presented as a risk signal.</li>
+          </ul>
+        </div>
+
+        <div class="chart overlay">
+          <div class="section-label">The decisive comparison <span class="line"></span></div>
+          <img src="chart_overlay_es.png" alt="True 5% expected shortfall: fragility overlay versus volatility management">
+          <div class="caption">True 5% expected shortfall, weekly. Lower is worse. Labels: bootstrap mean difference, fragility minus vol-managed.</div>
+          <div class="quote-line">“The benchmark is the argument.”</div>
+        </div>
+
+        <div class="block">
+          <div class="section-label">Rigor <span class="line"></span></div>
+          <ul>
+            <li>Truncation tests on features and study controls.</li>
+            <li>Bootstrap retains duplicate dates; centered p-values.</li>
+            <li>True expected shortfall; non-overlapping check.</li>
+            <li><b>40 tests</b>, CI on Python 3.10 and 3.11.</li>
+            <li>Config hash, git commit, data SHA256, run manifest.</li>
+            <li>Trial ledger, data dictionary, and model card.</li>
+          </ul>
+        </div>
+
+        <div class="block">
+          <div class="section-label">Scope <span class="line"></span></div>
+          <p class="small">
+            Three price-based factors in large US equities. The sample is survivor-only
+            (0 delistings; 18.14% vs 10.80% S&amp;P 500 TR), the study is exploratory, and
+            capacity is a model output — not an investable estimate. No causal claim is made
+            about crowding.
+          </p>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <div class="table">
+      <div class="left">
+        <span class="brass">Research brief</span> &nbsp;·&nbsp;
+        <a href="https://github.com/kira-ml/factor-crowding-risk">github.com/kira-ml/factor-crowding-risk</a>
+        &nbsp;·&nbsp; Code, report, trial ledger, tests
+      </div>
+      <div class="right">
+        MIT License &nbsp;·&nbsp; v2.1.0 &nbsp;·&nbsp; Not investment advice
+      </div>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

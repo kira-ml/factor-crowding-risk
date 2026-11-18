@@ -19,6 +19,9 @@ project is the measurement framework, the forensic audit of a failed predecessor
 and a credible negative result that saves a practitioner from building the wrong
 overlay.
 
+**One-page research brief:** [PDF](docs/one_pager/factor_crowding_research_brief.pdf) ·
+[PNG](docs/one_pager/factor_crowding_research_brief.png)
+
 ---
 
 ## Why this repository exists
@@ -89,7 +92,7 @@ threshold. The composite is largely a volatility proxy.
 
 **3. The fragility overlay loses to volatility management.** On true 5% expected
 shortfall, the overlay is worse than a volatility-managed portfolio at the same
-average exposure by **-1.25, -1.03, and -0.62 percentage points per week** for
+average exposure by **-1.20, -0.98, and -0.62 percentage points per week** for
 MOM, STREV, and LOWVOL, with bootstrap intervals excluding zero in every case.
 The overlay does beat **86-98%** of random exposure paths on tail timing, so the
 signal is not pure noise; it is simply weaker than volatility management.
@@ -180,8 +183,8 @@ centered p-value (p = 0.075).
 
 | Factor | Fragility ES5 | Vol-managed ES5 | Difference | 95% CI | Random rank |
 | :--- | ---: | ---: | ---: | :--- | ---: |
-| MOM | -5.85% | -4.62% | **-1.25%** | (-2.14%, -0.37%) | 0.975 |
-| STREV | -4.62% | -3.60% | **-1.03%** | (-1.59%, -0.41%) | 0.905 |
+| MOM | -5.85% | -4.62% | **-1.20%** | (-2.04%, -0.37%) | 0.975 |
+| STREV | -4.62% | -3.60% | **-0.98%** | (-1.70%, -0.29%) | 0.905 |
 | LOWVOL | -3.96% | -3.33% | **-0.62%** | (-1.12%, -0.17%) | 0.855 |
 
 True expected shortfall is the mean of the worst 5% of weeks. The overlay has
@@ -335,6 +338,7 @@ factor-crowding-risk/
 ├── tests/                       # 39 tests
 ├── docs/
 │   ├── report.md                # generated results
+│   ├── one_pager/               # A4 research brief (PDF/PNG)
 │   ├── methodology.md           # normative specification
 │   ├── audit_v1.md              # forensic V1 audit
 │   ├── audit_v2_independent.md  # pre-fix audit that drove v2.1
@@ -419,6 +423,7 @@ See [`TODO.md`](TODO.md) for the full list.
 | Document | What it answers |
 | :--- | :--- |
 | [`docs/report.md`](docs/report.md) | What the latest run found, with tables and figures |
+| [`docs/one_pager/factor_crowding_research_brief.pdf`](docs/one_pager/factor_crowding_research_brief.pdf) | One-page research brief for sharing |
 | [`docs/methodology.md`](docs/methodology.md) | The normative technical specification |
 | [`problem_framing.md`](problem_framing.md) | The research question, hypotheses, and non-claims |
 | [`docs/audit_v1.md`](docs/audit_v1.md) | Why the V1 result was invalid |
