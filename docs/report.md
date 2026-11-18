@@ -1,6 +1,6 @@
 # Crowded Exits: Results
 
-*Generated 2026-11-18 13:32 UTC from run `adda1236ef50_20261118T131601Z`. Every number below is produced by the pipeline.*
+*Generated 2026-11-18 13:47 UTC from run `adda1236ef50_20261118T133546Z`. Every number below is produced by the pipeline.*
 
 ## 1. Answer
 
@@ -93,9 +93,9 @@ Gross premium and beta-adjusted alpha, annualized with HAC standard errors. None
 
 | factor | gross_premium | premium_se | premium_low | premium_high | premium_t | capm_alpha | capm_alpha_t |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| MOM | 5.41% | 0.0424 | -2.90% | 13.71% | 1.2800 | 8.22% | 2.0700 |
-| STREV | 1.70% | 0.0349 | -5.14% | 8.54% | 0.4900 | -2.63% | -0.8100 |
-| LOWVOL | -4.84% | 0.0319 | -11.08% | 1.40% | -1.5200 | -3.31% | -1.0500 |
+| MOM | 5.41% | 4.24% | -2.90% | 13.71% | 1.2800 | 8.22% | 2.0700 |
+| STREV | 1.70% | 3.49% | -5.14% | 8.54% | 0.4900 | -2.63% | -0.8100 |
+| LOWVOL | -4.84% | 3.19% | -11.08% | 1.40% | -1.5200 | -3.31% | -1.0500 |
 
 Net annual premium at each sleeve size, using monthly buy-and-hold traded notional, a square-root impact law with c = 0.314, a 3bp half-spread, a 10-day execution horizon, and a 50bp annual borrow cost. Gross premium is shown for reference.
 
@@ -346,11 +346,11 @@ The final specification was not frozen before the results were seen. The factor 
 
 ```json
 {
-  "run_id": "adda1236ef50_20261118T131601Z",
-  "created_utc": "2026-11-18T13:31:59.980319+00:00",
+  "run_id": "adda1236ef50_20261118T133546Z",
+  "created_utc": "2026-11-18T13:47:34.602271+00:00",
   "config_hash": "adda1236ef50",
-  "git_commit": "298dc6c",
-  "git_dirty": true,
+  "git_commit": "37b7f08",
+  "git_dirty": false,
   "versions": {
     "python": "3.10.0",
     "numpy": "1.26.4",
@@ -378,7 +378,7 @@ The final specification was not frozen before the results were seen. The factor 
     "fragility_composite": 941,
     "study": 2780
   },
-  "elapsed_seconds": 960.6,
+  "elapsed_seconds": 708.9,
   "repro_passes": true
 }
 ```
