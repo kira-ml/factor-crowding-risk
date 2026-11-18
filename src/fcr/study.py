@@ -48,6 +48,7 @@ class StudyResult:
     quintile_sort: pd.DataFrame
     subsample: pd.DataFrame
     composite_sensitivity: pd.DataFrame
+    non_overlapping: pd.DataFrame
     h2: pd.DataFrame
     placebo: pd.DataFrame
     placebo_summary: pd.DataFrame
@@ -482,6 +483,39 @@ def subsample_regression(
     return pd.DataFrame(rows)
 
 
+def non_overlapping_regression(
+    dataset: pd.DataFrame, cfg: Config, reps: int = 400
+) -> pd.DataFrame:
+    """Primary specification on every fourth week, so targets do not overlap."""
+    dates = np.sort(dataset["date"].unique())
+    selected = dates[::4]
+    frame = dataset[dataset["date"].isin(selected)].reset_index(drop=True)
+    if len(frame) < 100:
+        return pd.DataFrame()
+    point = _fit(frame, "composite", cfg.primary_quantile)["composite"]
+    samples = []
+    for sub in _frames(frame, cfg, cfg.seed + 71, reps):
+        try:
+            samples.append(_fit(sub, "composite", cfg.primary_quantile)["composite"])
+        except Exception:
+            continue
+    samples = np.asarray(samples)
+    lo, hi = percentile_interval(samples, cfg.alpha)
+    return pd.DataFrame(
+        [
+            {
+                "specification": "every_fourth_week",
+                "estimate": point,
+                "se": float(np.nanstd(samples, ddof=1)),
+                "ci_low": lo,
+                "ci_high": hi,
+                "n_dates": int(frame["date"].nunique()),
+                "n_rows": len(frame),
+            }
+        ]
+    )
+
+
 def composite_sensitivity(
     dataset: pd.DataFrame, cfg: Config, reps: int = 200
 ) -> pd.DataFrame:
@@ -631,6 +665,7 @@ def run_study(
     es_difference = expected_shortfall_difference(dataset, fragility, cfg)
     quintile = quintile_sort(dataset, fragility, cfg)
     subsample = subsample_regression(dataset, cfg)
+    non_overlapping = non_overlapping_regression(dataset, cfg)
     composite = composite_sensitivity(dataset, cfg)
     h2 = h2_attenuation(dataset, cfg)
     placebo = placebo_test(dataset, cfg)
@@ -687,6 +722,7 @@ def run_study(
         es_difference=es_difference,
         quintile_sort=quintile,
         subsample=subsample,
+        non_overlapping=non_overlapping,
         composite_sensitivity=composite,
         h2=h2,
         placebo=placebo,

@@ -197,9 +197,9 @@ Composite:
 F_t = (z_S + z_B + z_D + z_P) / 4
 ```
 
-Equal weights, fixed in advance, no fitting. Sensitivity to weighting (equal vs
-first-principal-component fitted on expanding windows vs rank-average) is reported as a
-robustness check, not used to select the headline.
+Equal weights, fixed in advance, no fitting. Sensitivity to weighting (equal,
+drop-one, rank-average) is reported as a robustness check, not used to select the
+headline. Expanding PCA is future work.
 
 Sign convention: every `z` is oriented so that **higher means more fragile**.
 
@@ -555,8 +555,8 @@ Figures, minimum set:
 | 5 | Capacity curves, three factors, sensitivity band |
 | 6 | Overlay vs comparators, net of costs, with tail metrics |
 
-Each figure must be readable in grayscale and must state its sample period on the face of
-the plot.
+Each figure states its sample period on the face of the plot. Colors are chosen
+for print, but grayscale readability is not formally tested.
 
 ---
 

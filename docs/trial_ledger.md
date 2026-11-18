@@ -55,7 +55,7 @@ current study as pre-registered.
 | Target start | `t+1`, `t` | `t` |
 | Primary quantile | 0.05, 0.10, 0.25, 0.50, 0.75, 0.90 | 0.10 primary; 0.50 tail-specificity |
 | Bootstrap reps | 200, 400, 800, 2000 | 2000 primary; 400 secondary/per-factor |
-| Composite | equal, drop-one, rank-average, PCA | equal headline; drop-one and rank-average reported |
+| Composite | equal, drop-one, rank-average (PCA not run) | equal headline; drop-one and rank-average reported |
 | Secondary family | 4 measures x 2 horizons | same, BH at 10% |
 | Overlay schedule | floor 0.0-0.5, start 0.4-0.8, end 0.85-0.99 | floor 0.3, start 0.6, end 0.9 |
 

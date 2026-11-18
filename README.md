@@ -122,7 +122,7 @@ levels are biased upward and are not investable estimates.
 | **Factors** | `MOM` (12-1), `STREV` (1-month reversal), `LOWVOL` (trailing 252-day volatility). Dollar-neutral deciles, gross 2.0, 2% name cap, 8%/18% entry/exit bands, monthly buy-and-hold. |
 | **Fragility** | Four measures: residual synchronization (Ledoit-Wolf), liquidity-weighted effective breadth, exit horizon at 10% participation, long-leg persistence. Expanding z-scores, 104-week burn-in, ±4 winsorization, equal-weight composite. |
 | **Capacity** | `cost_i = 0.5·spread + c·σ_i·sqrt(|Δw_i|·A / (ADV_i·D))` on traded notional, with full-month weight drift. Baseline `c = 0.314`, `D = 10` days, 3bp half-spread, 50bp borrow. |
-| **Inference** | Quantile regression at `τ = 0.10`, factor fixed effects, lagged volatility/trend/liquidity controls, stationary bootstrap with duplicate dates retained (2,000 reps), centered p-values, Benjamini-Hochberg, reported MDE. |
+| **Inference** | Quantile regression at `τ = 0.10`, factor fixed effects, lagged volatility/trend/liquidity controls, stationary bootstrap with duplicate dates retained (2,000 reps), centered p-values, Benjamini-Hochberg, reported MDE, and a non-overlapping every-fourth-week check. |
 | **Decision layer** | Fragility overlay vs static, exposure-matched, volatility-managed, and randomized controls. True expected shortfall, maximum drawdown, costs, cash, and borrow. |
 
 ### The primary estimand

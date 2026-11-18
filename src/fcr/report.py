@@ -72,6 +72,19 @@ def _save(fig, name: str) -> Path:
     return path
 
 
+def _footer(fig, results: Results) -> None:
+    start = results.factors.dates[0].date()
+    end = results.factors.dates[-1].date()
+    fig.text(
+        0.5,
+        -0.01,
+        f"Sample: {start} to {end}",
+        ha="center",
+        fontsize=8,
+        color=PALETTE["muted"],
+    )
+
+
 # ---------------------------------------------------------------------------
 # Figures
 # ---------------------------------------------------------------------------
@@ -92,6 +105,7 @@ def figure_factor_returns(results: Results) -> Path:
         ax.set_ylabel("growth of 1")
         _clean(ax)
     axes[-1].set_xlabel("date")
+    _footer(fig, results)
     return _save(fig, "fig1_factor_returns.png")
 
 
@@ -108,6 +122,7 @@ def figure_fragility(results: Results) -> Path:
         )
         _clean(ax)
     axes[-1].set_xlabel("date")
+    _footer(fig, results)
     return _save(fig, "fig2_fragility.png")
 
 
@@ -146,6 +161,7 @@ def figure_conditional(results: Results) -> Path:
         ax.set_xlabel("fragility quintile (1 = calm, 5 = fragile)")
         ax.set_ylabel("forward 4-week return (%)")
         _clean(ax)
+    _footer(fig, results)
     return _save(fig, "fig3_conditional_returns.png")
 
 
@@ -203,6 +219,7 @@ def figure_quantile_coefficients(results: Results) -> Path:
         "(dots: point estimates; bars: 95% block bootstrap)"
     )
     _clean(ax)
+    _footer(fig, results)
     return _save(fig, "fig4_quantile_coefficients.png")
 
 
@@ -254,6 +271,7 @@ def figure_capacity(results: Results) -> Path:
         _clean(ax)
     axes[0].set_ylabel("net premium (% per year)")
     axes[0].legend(loc="lower left")
+    _footer(fig, results)
     return _save(fig, "fig5_capacity.png")
 
 
@@ -278,6 +296,7 @@ def figure_overlay(results: Results) -> Path:
         _clean(ax)
     axes[0].set_ylabel("growth of 1")
     axes[0].legend(loc="upper left")
+    _footer(fig, results)
     return _save(fig, "fig6_overlay.png")
 
 
@@ -872,6 +891,15 @@ def generate_report(results: Results) -> Path:
     add(_md_table(subsample) + "\n")
 
     add(
+        "**Non-overlapping check:** the same specification on every fourth week, "
+        "so the four-week target windows do not overlap.\n"
+    )
+    non_overlap = study.non_overlapping.copy()
+    for column in ("estimate", "se", "ci_low", "ci_high"):
+        non_overlap[column] = (non_overlap[column] * 100).round(3)
+    add(_md_table(non_overlap) + "\n")
+
+    add(
         "Individual measures, Benjamini-Hochberg adjusted across the pre-specified "
         "family of four measures and two horizons. P-values are centered "
         "bootstrap p-values.\n"
@@ -1049,6 +1077,7 @@ def generate_report(results: Results) -> Path:
         "es_difference": study.es_difference,
         "quintile_sort": study.quintile_sort,
         "subsample": study.subsample,
+        "non_overlapping": study.non_overlapping,
         "composite_sensitivity": study.composite_sensitivity,
         "h2": study.h2,
         "per_factor": study.per_factor,
