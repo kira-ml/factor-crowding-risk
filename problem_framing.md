@@ -186,25 +186,30 @@ independent variable; the four measures are secondary and subject to FDR control
 ### 4.5 Capacity
 
 Per-name temporary impact follows the square-root form used in practice
-(Almgren et al., 2005; Frazzini, Israel and Moskowitz, 2018):
+(Almgren et al., 2005; Frazzini, Israel and Moskowitz, 2018), applied to **traded**
+notional rather than held notional:
 
 ```
-cost_i(A) = 0.5 · spread_i + c · σ_i · sqrt( Q_i(A) / ADV_i )
-Q_i(A)    = |w_i| · A
+Q_i(A)    = |Δw_i| · A
+cost_i(A) = 0.5 · spread_i + c · σ_i · sqrt( Q_i(A) / (ADV_i · D) )
+C(A)      = Σ_i |Δw_i| · cost_i(A)
 ```
 
-with `c = 0.314` as the baseline, `spread_i = 5bp` for large caps, and sensitivity runs
-at `c ∈ {0.1, 0.5}` and `spread ∈ {2bp, 15bp}`. Round-trip cost per rebalance is
-`C(A) = Σ_i |Δw_i| · cost_i(A)`, and the net annualized premium is
-`Π_net(A) = Π_gross − 52 · E[C(A)]`.
+with `c = 0.314`, `spread_i = 3bp`, and `D = 10` execution days as the baseline.
+Sensitivity runs at `c ∈ {0.10, 0.314, 0.50}`, `spread ∈ {1, 3, 10}bp`, and
+`D ∈ {1, 5, 10, 21}` days. The net annualized premium is
+`Π_net(A) = Π_gross − 52 · E[C(A)] − borrow − financing`.
 
-**Capacity** at hurdle `h` is the largest `A` with `Π_net(A) ≥ h · Π_gross`. Primary
-`h = 0.5`; also reported at 0.25 and 0.75.
+**Retention capacity** at hurdle `h` is the largest `A` with
+`Π_net(A) ≥ h · Π_gross`. Primary `h = 0.50`; also reported at 0.25 and 0.75.
+**Cost-drag capacity** is the largest `A` at which annual trading costs reach
+50, 100, or 200bp. It is premium-independent and is the headline definition.
+Retention capacity is `n/a` when the gross premium is non-positive.
 
 This is a model, not a measurement. Its inputs are estimated and its coefficient is
-calibrated from published work. The deliverable is a curve with a sensitivity band, not
-a point estimate. Section 8 states this as a limitation, and the report presents the band
-alongside the headline.
+calibrated from published work. The deliverable is a surface with a sensitivity
+band, not a point estimate. Section 8 states this as a limitation, and the report
+presents the surface alongside the headline.
 
 ### 4.6 Estimands
 
