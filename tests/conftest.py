@@ -8,8 +8,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from fcr.config import Config
-from fcr.data import Panel
+from fcr.config import Config  # noqa: E402
+from fcr.data import Panel  # noqa: E402
 
 
 @pytest.fixture(scope="session")
@@ -46,9 +46,7 @@ def panel() -> Panel:
 
     prices = 50.0 * np.exp(np.nancumsum(np.nan_to_num(returns), axis=0))
     prices[:300, :10] = np.nan
-    close = pd.DataFrame(
-        prices, index=dates, columns=[f"S{i:03d}" for i in range(n_names)]
-    )
+    close = pd.DataFrame(prices, index=dates, columns=[f"S{i:03d}" for i in range(n_names)])
 
     volume = pd.DataFrame(
         rng.lognormal(13, 0.4, (n_days, n_names)), index=dates, columns=close.columns

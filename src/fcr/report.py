@@ -167,7 +167,6 @@ def figure_conditional(results: Results) -> Path:
 
 def figure_quantile_coefficients(results: Results) -> Path:
     dataset = results.study.dataset
-    cfg = results.cfg
     columns = [np.ones(len(dataset)), dataset["composite"].to_numpy()]
     for control in ("log_vol", "mkt_vol", "trail_12w", "liq_regime"):
         columns.append(dataset[control].to_numpy())

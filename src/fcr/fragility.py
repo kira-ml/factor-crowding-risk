@@ -142,7 +142,6 @@ def compute_persistence(
                 streak.pop(name)
         share_num = 0.0
         share_den = 0.0
-        weights = mask.loc[date]
         for name in current:
             streak[name] = streak.get(name, 0) + 1
             share_num += 1.0 if streak[name] >= cfg.persist_rebalances else 0.0

@@ -376,9 +376,11 @@ def expected_shortfall_difference(
         diffs = []
         for sub in _frames(group.reset_index(drop=True), cfg, cfg.seed + 31, reps):
             h = sub.loc[sub["quintile"] == 4, "fwd_4w"]
-            l = sub.loc[sub["quintile"] == 0, "fwd_4w"]
-            if len(h) > 10 and len(l) > 10:
-                diffs.append(expected_shortfall(h, 0.05) - expected_shortfall(l, 0.05))
+            low = sub.loc[sub["quintile"] == 0, "fwd_4w"]
+            if len(h) > 10 and len(low) > 10:
+                diffs.append(
+                    expected_shortfall(h, 0.05) - expected_shortfall(low, 0.05)
+                )
         lo, hi = percentile_interval(np.asarray(diffs), cfg.alpha)
         rows.append(
             {
@@ -399,9 +401,9 @@ def expected_shortfall_difference(
     diffs = []
     for sub in _frames(frame, cfg, cfg.seed + 32, reps):
         h = sub.loc[sub["quintile"] == 4, "fwd_4w"]
-        l = sub.loc[sub["quintile"] == 0, "fwd_4w"]
-        if len(h) > 10 and len(l) > 10:
-            diffs.append(expected_shortfall(h, 0.05) - expected_shortfall(l, 0.05))
+        low = sub.loc[sub["quintile"] == 0, "fwd_4w"]
+        if len(h) > 10 and len(low) > 10:
+            diffs.append(expected_shortfall(h, 0.05) - expected_shortfall(low, 0.05))
     lo, hi = percentile_interval(np.asarray(diffs), cfg.alpha)
     rows.append(
         {
@@ -433,9 +435,9 @@ def quintile_sort(
         diffs = []
         for sub in _frames(group.reset_index(drop=True), cfg, cfg.seed + 41, reps):
             h = sub.loc[sub["quintile"] == 4, "fwd_4w"]
-            l = sub.loc[sub["quintile"] == 0, "fwd_4w"]
-            if len(h) > 10 and len(l) > 10:
-                diffs.append(h.mean() - l.mean())
+            low = sub.loc[sub["quintile"] == 0, "fwd_4w"]
+            if len(h) > 10 and len(low) > 10:
+                diffs.append(h.mean() - low.mean())
         lo, hi = percentile_interval(np.asarray(diffs), cfg.alpha)
         rows.append(
             {
