@@ -282,7 +282,7 @@ python -m fcr all  --config configs/v2.json    # everything, including the repor
 pytest -q
 ```
 
-**39 tests** cover factor invariants, leakage/truncation, target alignment,
+**40 tests** cover factor invariants, leakage/truncation, target alignment,
 bootstrap duplicate retention, expected shortfall, overlay schedules, comparator
 exposure matching, capacity drift, data validation, and the study controls.
 
@@ -358,7 +358,7 @@ factor-crowding-risk/
 - **Generated report**: `docs/report.md` is written by the pipeline, not edited
   by hand. A docs check verifies the README’s headline numbers against the
   generated tables.
-- **CI**: GitHub Actions runs the 39 tests on Python 3.10 and 3.11.
+- **CI**: GitHub Actions runs the 40 tests on Python 3.10 and 3.11.
 
 The raw data cache is not committed. To reproduce the exact panel, use the same
 `yfinance` snapshot; the manifest tells you whether your panel hash matches.

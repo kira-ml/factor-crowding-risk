@@ -53,7 +53,7 @@ paper-level work, not unfinished implementation.
 - [x] Trial ledger and researcher-degrees-of-freedom section
 - [x] Data dictionary and model card
 - [x] Archive banner and PDF notice
-- [x] 39 tests, CI workflow, exact dependency pins
+- [x] 40 tests, CI workflow, exact dependency pins
 
 ## Remaining work (not release blockers)
 
