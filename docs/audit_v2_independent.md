@@ -1,5 +1,9 @@
 # Independent Audit: Crowded Exits v2
 
+> **HISTORICAL AUDIT (pre-v2.1).** This document records the pre-fix working
+> tree. It is not the current status of the repository. Most code-level findings
+> were addressed in v2.1; see `TODO.md` and `docs/report.md`.
+
 **Date:** 2026-11-18
 **Scope:** the working tree, cached panel, generated results, documentation, tests, and git state of `factor-crowding-risk`.
 **Method:** full code read, independent re-runs from the cached panel, targeted falsification tests, and a claim-by-claim comparison of README, report, methodology, and code.

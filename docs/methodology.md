@@ -62,16 +62,16 @@ ADV_i(t) = median( dollar volume ) over the 60 trading days ending at t
 ```
 
 All inputs are lagged to `t`. The universe is recomputed at every rebalance and stored,
-so it can be audited. It is not filtered using any future information, including index
-membership.
+so it can be audited. Selection is point-in-time with respect to liquidity, price,
+and history. It is **not** point-in-time with respect to existence: the candidate
+pool is current index membership.
 
-Residual survivorship: names absent from `yfinance` cannot enter, even if they were
-liquid at the time. The candidate pool is current S&P 500/400 membership. The
-panel contains zero delistings, so this is **complete survivorship**, not a
-residual bias. The report quantifies it (0 delistings; equal-weight CAGR 18.14%
-versus 10.80% for the S&P 500 total return) and treats factor premia and capacity
-levels as upward-biased model outputs, not investable estimates. No correction is
-applied.
+Survivorship: names absent from `yfinance` cannot enter, even if they were
+liquid at the time. The panel contains zero delistings, so this is **complete
+survivorship**, not a residual bias. The report quantifies it (0 delistings;
+equal-weight CAGR 18.14% versus 10.80% for the S&P 500 total return) and treats
+factor premia and capacity levels as upward-biased model outputs, not investable
+estimates. No correction is applied.
 
 ---
 
@@ -205,12 +205,11 @@ Sign convention: every `z` is oriented so that **higher means more fragile**.
 
 ### 3.6 Guards
 
-- A measure is `NaN` if fewer than 85% of its inputs are available. Rows with `NaN` in
-  the composite are dropped from that test, and the count of dropped rows is reported on
-  every table.
+- The composite requires all four z-scores; rows with a missing component are
+  dropped from that test, and the count of usable dates is reported in the
+  coverage table.
 - Winsorize each `z` at ±4 to prevent a single observation from dominating.
-- If the expanding standard deviation is zero (flat measure), the `z` is set to 0 and the
-  date is flagged.
+- If the expanding standard deviation is zero (flat measure), the `z` is set to 0.
 
 ---
 
@@ -238,7 +237,7 @@ See `DECISIONS.md` ADR-0006.
 | `c` | 0.314 | 0.10, 0.50 |
 | `spread_i` | 3 bp | 1 bp, 10 bp |
 | `execution_days` | 10 | reported in the sensitivity band |
-| Borrow cost, shorts | 50 bp / yr | 25, 150 |
+| Borrow cost, shorts | 50 bp / yr | not varied in the current grid |
 | Financing | 0 | 0 |
 
 `σ_i` is the trailing 60-day daily return standard deviation.
@@ -262,8 +261,8 @@ convention: weights drift between rebalances, then reset.
 A*(h) = max{ A : Π_net(A) >= h · Π_gross }
 ```
 
-Primary hurdle `h = 0.50`; also 0.25 and 0.75. If no `A` in `[1e6, 1e11]` satisfies the
-condition, capacity is reported as below $1M and flagged.
+Primary hurdle `h = 0.50`; also 0.25 and 0.75. Solutions are clipped to
+`[$1M, $100B]`; a value at the bound is a model limit, not a measurement.
 
 Because retention-based capacity is undefined for a factor with no gross premium, a
 second and **headline** definition is premium-independent:

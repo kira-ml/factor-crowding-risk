@@ -108,8 +108,8 @@ assumptions. These are model outputs on a survivor-only sample.
 
 **5. Survivorship is the binding limitation.** The panel has **895 tickers and
 zero delistings** over 21 years. It compounds at **18.14%** equal-weight versus
-**10.80%** for the S&P 500 total return. Factor premia and capacity levels are
-biased upward and are not investable estimates.
+**10.80%** for the S&P 500 total return (`^SP500TR`). Factor premia and capacity
+levels are biased upward and are not investable estimates.
 
 ---
 

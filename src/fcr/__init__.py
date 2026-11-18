@@ -1,6 +1,6 @@
 """Crowded Exits: exit risk and capacity in equity factors.
 
-Version 2. See problem_framing.md and docs/methodology.md.
+Version 2.1. See problem_framing.md and docs/methodology.md.
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
