@@ -7,7 +7,6 @@ from fcr.overlay import (
     build_comparators,
     expanding_percentile,
     overlay_weight,
-    volatility_target,
 )
 
 

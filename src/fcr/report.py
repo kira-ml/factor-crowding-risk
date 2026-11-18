@@ -22,7 +22,7 @@ import statsmodels.api as sm
 from .config import DOCS_DIR, OUT_DIR, Config
 from .overlay import expanding_percentile
 from .pipeline import Results
-from .stats import quantile_regression, sharpe
+from .stats import quantile_regression
 from .targets import episode_frame
 from .universe import market_returns
 

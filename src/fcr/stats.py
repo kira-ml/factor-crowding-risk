@@ -115,7 +115,6 @@ class QuantileFit:
 def quantile_regression(
     y: np.ndarray, x: np.ndarray, names: list[str], q: float
 ) -> QuantileFit:
-    import statsmodels.api as sm
     from statsmodels.regression.quantile_regression import QuantReg
 
     model = QuantReg(y, x)

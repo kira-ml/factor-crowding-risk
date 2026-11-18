@@ -1,8 +1,7 @@
 import numpy as np
-import pandas as pd
 import pytest
 
-from fcr.capacity import cost_terms, build_capacity, traded_notional
+from fcr.capacity import build_capacity, cost_terms, traded_notional
 from fcr.factors import build_factors
 from fcr.universe import build_universe
 
@@ -49,7 +48,7 @@ def test_beta_diagnostic_is_small(built):
 
 def test_capacity_closed_form_matches_bruteforce(built, panel, cfg):
     universe, factors = built
-    from fcr.capacity import _sigma, _adv, _mean_cost
+    from fcr.capacity import _adv, _sigma
     from fcr.factors import weekly_returns
 
     weekly = weekly_returns(panel, factors.dates)

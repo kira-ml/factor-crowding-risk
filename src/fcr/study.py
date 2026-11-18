@@ -8,7 +8,7 @@ Inference by stationary bootstrap over dates, retaining duplicate dates.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -236,7 +236,7 @@ def primary_regression(dataset: pd.DataFrame, cfg: Config) -> tuple[pd.DataFrame
     mde = {
         "se_primary": se_primary,
         "mde_absolute": minimum_detectable_effect(se_primary, cfg.alpha, cfg.power),
-        "reps_used": int(len(low_samples)),
+        "reps_used": len(low_samples),
         "tail_difference": float(
             point[quantiles[0]]["composite"] - point[quantiles[1]]["composite"]
         ),
@@ -702,7 +702,7 @@ def run_study(
     )
 
     diagnostics = {
-        "n_rows": int(len(dataset)),
+        "n_rows": len(dataset),
         "n_dates": int(dataset["date"].nunique()),
         "n_blocks_4w": int(np.ceil(dataset["date"].nunique() / 4)),
         "n_factors": int(dataset["factor"].nunique()),

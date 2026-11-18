@@ -140,7 +140,7 @@ def run_decision_layer(
                 "es_5_p95": float(np.nanquantile(random_es, 0.95)),
                 "percentile_rank": float(np.nanmean(random_es <= actual_es)),
                 "sharpe_p50": float(np.nanquantile(random_sharpe, 0.50)),
-                "n": int(len(random_es)),
+                "n": len(random_es),
             }
         )
 

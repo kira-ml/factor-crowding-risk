@@ -346,7 +346,7 @@ def check_invariants(factors: FactorSet, cfg: Config, tol: float = 1e-8) -> dict
             "max_gross_error": float(gross),
             "max_abs_weight": float(cap),
             "cap": cfg.name_cap * cfg.gross,
-            "dates": int(len(active)),
+            "dates": len(active),
         }
         if dollar > 1e-6:
             raise AssertionError(f"{factor}: not dollar-neutral ({dollar})")

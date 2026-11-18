@@ -11,8 +11,8 @@ idempotent.
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 import time
 import warnings
 from dataclasses import dataclass
@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from .config import Config, DATA_DIR, RAW_DIR
+from .config import DATA_DIR, RAW_DIR, Config
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -69,7 +69,7 @@ class Panel:
     def last_valid(self) -> pd.Series:
         return self.close.apply(lambda s: s.last_valid_index())
 
-    def slice(self, end: pd.Timestamp) -> "Panel":
+    def slice(self, end: pd.Timestamp) -> Panel:
         return Panel(self.close.loc[:end], self.volume.loc[:end])
 
 
@@ -314,7 +314,7 @@ def validate(panel: Panel) -> dict:
             raise DataError("Infinite volume present")
 
     return {
-        "rows": int(len(close)),
+        "rows": len(close),
         "tickers": int(close.shape[1]),
         "coverage": round(coverage, 4),
         "large_moves": jumps,

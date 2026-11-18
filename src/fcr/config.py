@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass, field, replace
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -108,7 +108,7 @@ class Config:
         payload = json.dumps(self.to_dict(), sort_keys=True, default=str)
         return hashlib.sha256(payload.encode()).hexdigest()[:12]
 
-    def replace(self, **kwargs: Any) -> "Config":
+    def replace(self, **kwargs: Any) -> Config:
         return replace(self, **kwargs)
 
     def ensure_dirs(self) -> None:
@@ -116,7 +116,7 @@ class Config:
             Path(path).mkdir(parents=True, exist_ok=True)
 
     @classmethod
-    def load(cls, path: str | Path | None = None) -> "Config":
+    def load(cls, path: str | Path | None = None) -> Config:
         if path is None:
             return cls()
         payload = json.loads(Path(path).read_text())

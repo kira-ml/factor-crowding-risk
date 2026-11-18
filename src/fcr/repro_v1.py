@@ -73,7 +73,7 @@ def v1_factor_identity(panel: Panel, cfg: Config) -> dict:
     )
 
     return {
-        "months": int(len(returns)),
+        "months": len(returns),
         "max_abs_weight_gap": max_weight_gap,
         "max_abs_return_gap": max_return_gap,
         "return_correlation": correlation,
@@ -147,7 +147,7 @@ def f1_base_rate_analysis(
 
     return {
         "available": True,
-        "test_observations": int(len(test)),
+        "test_observations": len(test),
         "negative_share": negative_share,
         "positive_share": 1.0 - negative_share,
         "constant_predictor_f1": constant_f1,

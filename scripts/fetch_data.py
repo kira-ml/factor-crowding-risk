@@ -16,8 +16,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from fcr.config import Config  # noqa: E402
-from fcr.data import load_panel, panel_hash, validate  # noqa: E402
+from fcr.config import Config
+from fcr.data import load_panel, panel_hash, validate
 
 
 def main() -> int:

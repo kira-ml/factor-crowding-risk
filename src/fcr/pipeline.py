@@ -5,12 +5,10 @@ from __future__ import annotations
 import json
 import platform
 import subprocess
-import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
 
@@ -68,7 +66,6 @@ def _versions() -> dict[str, str]:
     import scipy
     import sklearn
     import statsmodels
-
     import yfinance
 
     return {
@@ -171,14 +168,14 @@ def run_pipeline(
             "end": str(panel.dates[-1].date()),
         },
         "universe": {
-            "dates": int(len(universe.dates)),
+            "dates": len(universe.dates),
             "mean_size": float(coverage["size"].mean()),
             "min_size": int(coverage["size"].min()),
         },
         "rows": {
-            "factors": int(len(factors.returns)),
+            "factors": len(factors.returns),
             "fragility_composite": int(fragility.composite.notna().any(axis=1).sum()),
-            "study": int(len(results.study.dataset)) if results.study else 0,
+            "study": len(results.study.dataset) if results.study else 0,
         },
         "elapsed_seconds": round(time.time() - started, 1),
         "repro_passes": bool(results.repro.get("passes", False)),

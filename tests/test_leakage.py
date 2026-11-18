@@ -6,7 +6,6 @@ future must not change any feature at the truncation date.
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from fcr.factors import build_factors
 from fcr.fragility import build_fragility, expanding_z
